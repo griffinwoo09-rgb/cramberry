@@ -1,0 +1,2385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Cramberry: a free study app. Import vocab lists and learn them with flashcards, quizzes, and games.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='8' width='22' height='17' rx='2' fill='white' stroke='%231A1E2A' stroke-width='2'/%3E%3Cpath d='M6 13h22' stroke='%23B0164A' stroke-width='2'/%3E%3Ccircle cx='21' cy='20' r='4.5' fill='%23B0164A'/%3E%3C/svg%3E">
+<style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Cramberry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=Shantell+Sans:wght@500;700;800&display=swap">
+<style>
+/* Layout: one centered column under a sticky top bar; study modes get a focused stage built on the index-card motif. */
+:root {
+  --bg: #ECEFF5;
+  --surface: #FFFFFF;
+  --surface-2: #F4F6FA;
+  --ink: #1A1E2A;
+  --ink-soft: #586079;
+  --line: #D5DAE5;
+  --rule: #C9D9EF;
+  --accent: #B0164A;
+  --accent-hover: #93113D;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #F8E2EA;
+  --mark: #FFE15A;
+  --mark-band: #FFE15A;
+  --good: #1B7A4B;
+  --good-soft: #DCF1E5;
+  --bad: #BC3127;
+  --bad-soft: #FADFDB;
+  --learning: #C1820E;
+  --gloss: rgba(255, 255, 255, .9);
+  --shadow: 0 1px 2px rgba(26, 30, 42, .06), 0 6px 18px rgba(26, 30, 42, .07);
+  --font-display: "Shantell Sans", "Segoe Print", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10131B; --surface: #191D28; --surface-2: #212635; --ink: #E8EBF2; --ink-soft: #9CA4B8;
+    --line: #2E3447; --rule: #26395A; --accent: #FF6B94; --accent-hover: #FF8AAB; --accent-ink: #23060F;
+    --accent-soft: #3B1824; --mark: #F2D74E; --mark-band: rgba(242, 215, 78, .32); --good: #52C98E;
+    --good-soft: #163026; --bad: #FF7F72; --bad-soft: #3B1D1A; --learning: #E6B04A;
+    --gloss: rgba(255, 255, 255, .16); --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px rgba(0, 0, 0, .32);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10131B; --surface: #191D28; --surface-2: #212635; --ink: #E8EBF2; --ink-soft: #9CA4B8;
+  --line: #2E3447; --rule: #26395A; --accent: #FF6B94; --accent-hover: #FF8AAB; --accent-ink: #23060F;
+  --accent-soft: #3B1824; --mark: #F2D74E; --mark-band: rgba(242, 215, 78, .32); --good: #52C98E;
+  --good-soft: #163026; --bad: #FF7F72; --bad-soft: #3B1D1A; --learning: #E6B04A;
+  --gloss: rgba(255, 255, 255, .16); --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px rgba(0, 0, 0, .32);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--font-body); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(26px, 4vw, 34px); }
+h2 { font-size: 20px; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-soft); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hl { background: linear-gradient(transparent 58%, var(--mark-band) 58%, var(--mark-band) 92%, transparent 92%); padding-inline: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row.tight { gap: 6px; }
+.row.end { justify-content: flex-end; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+
+.wrap { max-width: 1040px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap.narrow { max-width: 780px; }
+.page { padding-block: 28px 72px; display: flex; flex-direction: column; gap: 28px; }
+
+/* Top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 10px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 4px 2px; font: 800 21px/1 var(--font-display); color: var(--ink); }
+.brand svg { flex: none; }
+.topnav { display: flex; gap: 6px; align-items: center; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 700; font-size: 15px; line-height: 1.2; text-decoration: none; transition: background .15s, border-color .15s, transform .1s; }
+.btn:hover:not(:disabled) { border-color: var(--ink-soft); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: transparent; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; }
+.btn.danger { color: var(--bad); }
+.btn.danger-fill { background: var(--bad); color: var(--surface); border-color: transparent; }
+.btn.sm { min-height: 34px; padding: 5px 12px; font-size: 14px; }
+.btn.icon { padding: 6px; min-width: 40px; }
+.btn.sm.icon { min-width: 34px; }
+.btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.btn.big { min-height: 56px; font-size: 17px; padding-inline: 22px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.link { background: none; border: 0; padding: 4px 0; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.back { align-self: flex-start; background: none; border: 0; padding: 4px 0; color: var(--ink-soft); font-weight: 700; display: inline-flex; gap: 4px; align-items: center; }
+.back:hover { color: var(--ink); }
+kbd { font: 500 12px/1 var(--font-mono); padding: 3px 6px; border: 1px solid currentColor; border-radius: 4px; opacity: .7; }
+
+/* Inputs */
+input[type="text"], input[type="number"], input:not([type]), textarea, select {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); line-height: 1.4;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+select { width: auto; padding-block: 7px; }
+label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.err { color: var(--bad); font-weight: 700; }
+
+/* Library */
+.hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(22px, 4vw, 44px); box-shadow: var(--shadow); }
+.hero-copy { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.hero-copy h1 { font-size: clamp(30px, 5vw, 44px); }
+.hero-copy p.lede { font-size: 17px; color: var(--ink-soft); max-width: 46ch; }
+.hero-art { position: relative; height: 240px; }
+.art-card { position: absolute; inset: 20px 10px; border-radius: 6px; box-shadow: var(--shadow); }
+.art-card:nth-child(1) { transform: rotate(-7deg) translate(-8px, 6px); }
+.art-card:nth-child(2) { transform: rotate(4deg) translate(10px, -4px); }
+.art-card:nth-child(3) { display: flex; flex-direction: column; padding: 14px 20px; }
+.art-card .w { margin: auto; font: 800 34px/1 var(--font-display); }
+.art-sticky { position: absolute; right: 0; bottom: 4px; background: var(--mark); color: #1A1E2A; font: 700 14px/1.2 var(--font-display); padding: 10px 12px; transform: rotate(3deg); box-shadow: var(--shadow); }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; padding: 0; margin: 0; counter-reset: s; }
+.steps li { counter-increment: s; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-top: 2px solid var(--line); }
+.steps li::before { content: "Step " counter(s); font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.steps b { font-family: var(--font-display); font-size: 17px; }
+.lib-head { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end; }
+.set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 22px; }
+.set-card { position: relative; display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 18px; min-height: 150px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 5px 5px 0 -1px var(--surface), 5px 5px 0 0 var(--line); transition: transform .15s, box-shadow .15s; }
+.set-card:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 -1px var(--surface), 7px 7px 0 0 var(--ink-soft); }
+.set-card .t { font: 800 19px/1.2 var(--font-display); overflow-wrap: anywhere; }
+.set-card .meta { color: var(--ink-soft); font-size: 14px; margin-top: auto; }
+.set-card.new { align-items: center; justify-content: center; border-style: dashed; box-shadow: none; color: var(--accent); font-weight: 700; }
+.set-card.new:hover { box-shadow: none; }
+
+/* Mastery bar */
+.mbar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); }
+.mbar.big { height: 12px; }
+.mbar span { display: block; height: 100%; transition: width .4s; }
+.m-done { background: var(--good); }
+.m-learn { background: var(--learning); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--ink-soft); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* Set page */
+.set-head { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-start; }
+.set-head > div:first-child { min-width: 0; flex: 1 1 320px; display: flex; flex-direction: column; gap: 8px; }
+.set-head h1 { overflow-wrap: anywhere; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.section { display: flex; flex-direction: column; gap: 14px; }
+.section-head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.mode-tile { display: grid; grid-template-columns: 44px 1fr; gap: 4px 14px; align-items: start; text-align: left; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; transition: border-color .15s, transform .15s; }
+.mode-tile:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.mode-tile .ic { grid-row: span 3; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.mode-tile .n { font: 800 17px/1.2 var(--font-display); }
+.mode-tile .d { font-size: 14px; color: var(--ink-soft); line-height: 1.4; }
+.mode-tile .best { font: 500 12px/1.3 var(--font-mono); color: var(--ink-soft); margin-top: 4px; }
+.mode-tile:disabled { opacity: .5; cursor: not-allowed; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.terms { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.terms li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 16px; padding: 14px 16px; border-top: 1px solid var(--line); align-items: start; }
+.terms li:first-child { border-top: 0; }
+.terms .tt { font: 700 16px/1.35 var(--font-display); overflow-wrap: anywhere; white-space: pre-wrap; }
+.terms .td { overflow-wrap: anywhere; white-space: pre-wrap; }
+.lvl { font: 500 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; justify-self: start; }
+.lvl.l1 { color: var(--learning); border: 1px solid var(--learning); }
+.lvl.l2 { color: var(--good); border: 1px solid var(--good); }
+.star { color: var(--ink-soft); }
+.star.on { color: var(--accent); }
+
+/* Editor */
+details.import { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+details.import > summary { cursor: pointer; padding: 16px 20px; font: 800 17px/1.2 var(--font-display); list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+details.import > summary::-webkit-details-marker { display: none; }
+details.import > summary::after { content: "+"; font-family: var(--font-mono); color: var(--accent); }
+details.import[open] > summary::after { content: "−"; }
+.import-body { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.import-body textarea { min-height: 150px; font-family: var(--font-mono); font-size: 14px; resize: vertical; }
+.seps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+legend { font-weight: 700; font-size: 14px; padding: 0; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span { display: inline-block; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 99px; font-size: 14px; font-weight: 700; background: var(--surface); }
+.chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.custom-sep { width: 90px !important; padding: 6px 10px !important; }
+.filebtn { position: relative; overflow: hidden; }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.imp-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.imp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.imp-table th, .imp-table td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.imp-table th { border-top: 0; font: 500 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); background: var(--surface-2); }
+.ed-tools { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.ed-rows { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.ed-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1.6fr) 40px; gap: 12px; align-items: start; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.ed-row.err { border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+.ed-num { padding-top: 10px; color: var(--ink-soft); font-size: 13px; }
+.ed-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ed-field textarea { resize: none; overflow: hidden; min-height: 42px; }
+.ed-field small { font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.ed-foot { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: 1px solid var(--line); }
+.ed-foot .err { margin-right: auto; }
+
+/* Mode pages */
+.mode-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.mode-head .left { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mode-head .back { overflow-wrap: anywhere; text-align: left; }
+.mode-head .right { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.hud { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.hud .stat { display: flex; flex-direction: column; align-items: flex-end; }
+.hud .stat b { font: 500 22px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.hud .stat span { font: 500 11px/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.hint { text-align: center; color: var(--ink-soft); font-size: 13px; }
+.center { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+.result { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(22px, 4vw, 40px); box-shadow: var(--shadow); }
+.result .bignum { font: 500 clamp(44px, 9vw, 64px)/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.badge-new { background: var(--mark); color: #1A1E2A; font: 800 14px/1 var(--font-display); padding: 6px 10px; border-radius: 4px; transform: rotate(-2deg); }
+.howto { max-width: 52ch; color: var(--ink-soft); }
+
+/* Index card surface */
+.indexcard { position: relative; background-color: var(--surface); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px); border-radius: 6px; box-shadow: var(--shadow); }
+.indexcard::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 46px; background: var(--surface); border-bottom: 2px solid var(--accent); border-radius: 6px 6px 0 0; }
+.indexcard > * { position: relative; }
+
+/* Flashcards */
+.fc-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.fc-progress { height: 4px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.fc-progress span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.fc-stage { perspective: 1800px; }
+.flashcard { display: block; width: 100%; height: clamp(260px, 48vh, 430px); cursor: pointer; border-radius: 6px; }
+.fc-inner { position: relative; width: 100%; height: 100%; transition: transform .55s cubic-bezier(.2, .7, .2, 1); transform-style: preserve-3d; }
+.flashcard.flipped .fc-inner { transform: rotateY(180deg); }
+.fc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; padding: 14px clamp(18px, 4vw, 36px) 20px; }
+.fc-face.back { transform: rotateY(180deg); }
+.fc-label { height: 32px; display: flex; align-items: center; font: 500 12px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.fc-text { flex: 1; display: flex; overflow: auto; min-height: 0; padding-top: 12px; }
+.fc-text > span { margin: auto; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fc-text.term > span { font-family: var(--font-display); font-weight: 700; }
+.sz-l { font-size: clamp(26px, 4.4vw, 40px); line-height: 1.2; }
+.sz-m { font-size: clamp(19px, 2.8vw, 24px); line-height: 1.35; }
+.sz-s { font-size: 17px; line-height: 1.5; }
+.fc-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.btn.learnbtn { color: var(--learning); }
+.btn.knowbtn { color: var(--good); }
+
+/* Questions (Learn and Test) */
+.qcard { padding: 14px clamp(18px, 4vw, 32px) 26px; display: flex; flex-direction: column; gap: 14px; min-height: 180px; }
+.qlabel { height: 32px; display: flex; align-items: center; font: 500 12px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.qprompt { white-space: pre-wrap; overflow-wrap: anywhere; padding-top: 8px; }
+.qprompt.term { font-family: var(--font-display); font-weight: 700; }
+.qhint { font-weight: 700; color: var(--ink-soft); font-size: 14px; }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.choice { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); min-width: 0; transition: border-color .15s, background .15s; }
+.choice:hover:not(:disabled) { border-color: var(--accent); }
+.choice .k { flex: none; font: 500 12px/1 var(--font-mono); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; color: var(--ink-soft); margin-top: 1px; }
+.choice .ct { overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
+.choice.picked { border-color: var(--accent); background: var(--accent-soft); }
+.choice.correct { border-color: var(--good); background: var(--good-soft); }
+.choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.choice:disabled { cursor: default; }
+.wform { display: flex; flex-direction: column; gap: 10px; }
+.wform .row input { flex: 1 1 240px; width: auto; min-width: 0; }
+.fb { border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; border: 1.5px solid; }
+.fb.good { border-color: var(--good); background: var(--good-soft); }
+.fb.bad { border-color: var(--bad); background: var(--bad-soft); }
+.fb strong { font-family: var(--font-display); font-size: 18px; }
+.fb .ans { overflow-wrap: anywhere; white-space: pre-wrap; }
+.fb s { opacity: .75; }
+.learn-top { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.round-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; max-width: 520px; }
+.round-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); overflow-wrap: anywhere; }
+.round-list .ok { color: var(--good); font-weight: 700; }
+.round-list .no { color: var(--bad); font-weight: 700; }
+
+/* Test */
+.tq-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.tq { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.tq.is-ok { border-color: var(--good); }
+.tq.is-no { border-color: var(--bad); }
+.tq-head { display: flex; justify-content: space-between; gap: 10px; font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.tq-prompt { font-size: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tq-prompt.term { font-family: var(--font-display); font-weight: 700; font-size: 22px; }
+.tq-pair { padding: 12px 14px; border-left: 3px solid var(--rule); background: var(--surface-2); border-radius: 0 8px 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tq-verdict { font-weight: 700; }
+.tq-verdict.ok { color: var(--good); }
+.tq-verdict.no { color: var(--bad); }
+.cfg { display: flex; flex-direction: column; gap: 18px; }
+.cfg .numrow { display: flex; gap: 10px; align-items: center; }
+.cfg .numrow input { width: 96px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.checks label { display: inline-flex; gap: 8px; align-items: center; font-weight: 700; }
+.checks input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* Match */
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.mtile { min-height: 112px; padding: 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; white-space: pre-wrap; display: flex; align-items: center; justify-content: center; text-align: center; transition: border-color .12s, background .12s, transform .12s; }
+.mtile.term { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.mtile:hover:not(:disabled) { border-color: var(--ink-soft); }
+.mtile.sel { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-2px); }
+.mtile.bad { animation: shake .35s; border-color: var(--bad); }
+.mtile.gone { animation: matched .45s forwards; pointer-events: none; }
+@keyframes shake { 0%, 100% { translate: 0; } 25% { translate: -6px; } 75% { translate: 6px; } }
+@keyframes matched { 0% { background: var(--good-soft); border-color: var(--good); } 60% { background: var(--good-soft); border-color: var(--good); opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.penalty { color: var(--bad); font: 500 14px var(--font-mono); }
+
+/* Memory */
+.memgrid { display: grid; gap: 10px; }
+.mcard { perspective: 1200px; aspect-ratio: 4 / 5; max-width: 100%; padding: 0; border: 0; background: none; border-radius: 10px; }
+.mc-inner { position: relative; display: block; width: 100%; height: 100%; transition: transform .45s cubic-bezier(.2, .7, .2, 1); transform-style: preserve-3d; }
+.mcard.up .mc-inner, .mcard.done .mc-inner { transform: rotateY(180deg); }
+.mc-back, .mc-face { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.mc-back { background-color: var(--accent); background-image: radial-gradient(circle at 50% 50%, var(--accent-hover) 0 3px, transparent 3.5px); background-size: 16px 16px; border: 4px solid var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.mc-face { transform: rotateY(180deg); background: var(--surface); border: 1.5px solid var(--accent); display: flex; flex-direction: column; gap: 4px; padding: 8px; overflow: auto; text-align: center; }
+.mc-label { font: 500 10px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.mc-text { margin: auto; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; white-space: pre-wrap; }
+.mc-text.term { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.mcard.done .mc-face { border-color: var(--good); background: var(--good-soft); }
+
+/* Bubble Pop */
+.b-prompt { padding: 10px clamp(16px, 3vw, 28px) 18px; min-height: 120px; display: flex; flex-direction: column; gap: 6px; }
+.b-prompt .qprompt { font-size: 18px; padding-top: 4px; }
+.b-reveal { font-weight: 700; color: var(--bad); min-height: 1.5em; }
+.arena { position: relative; height: clamp(340px, 56vh, 520px); overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: linear-gradient(to top, var(--accent-soft), var(--surface) 75%); }
+.bubble { position: absolute; bottom: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 14px 12px; min-height: 80px; border-radius: 44px; border: 2px solid var(--accent); background: radial-gradient(circle at 28% 22%, var(--gloss), transparent 42%), var(--surface); color: var(--ink); font: 700 15px/1.25 var(--font-display); will-change: transform; overflow-wrap: anywhere; }
+.bubble .bnum { position: absolute; top: -9px; left: 50%; translate: -50% 0; font: 500 11px/1 var(--font-mono); background: var(--accent); color: var(--accent-ink); padding: 3px 6px; border-radius: 99px; }
+.bubble.pop { animation: pop .35s forwards; pointer-events: none; }
+.bubble.dud { opacity: .45; border-color: var(--ink-soft); cursor: default; }
+.bubble.reveal { border-color: var(--good); box-shadow: 0 0 0 4px var(--good-soft); }
+@keyframes pop { to { scale: 1.45; opacity: 0; } }
+.hearts { display: flex; gap: 4px; color: var(--accent); }
+.hearts .lost { color: var(--line); }
+
+/* Lightning */
+.tbar { height: 10px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.tbar span { display: block; height: 100%; background: var(--accent); }
+.tbar.low span { background: var(--bad); }
+.lt-card { padding: 10px clamp(18px, 4vw, 32px) 24px; display: flex; flex-direction: column; gap: 4px; min-height: 230px; }
+.lt-term { font: 700 clamp(22px, 3.6vw, 30px)/1.2 var(--font-display); overflow-wrap: anywhere; padding-bottom: 8px; }
+.lt-def { font-size: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lt-card.flash-good { animation: flashg .4s; }
+.lt-card.flash-bad { animation: flashb .4s; }
+@keyframes flashg { from { box-shadow: 0 0 0 6px var(--good); } }
+@keyframes flashb { from { box-shadow: 0 0 0 6px var(--bad); } }
+.lt-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn.yes { color: var(--good); border-color: var(--good); }
+.btn.no { color: var(--bad); border-color: var(--bad); }
+.mult { font: 800 18px/1 var(--font-display); color: var(--accent); }
+
+/* Unscramble */
+.us-clue { padding: 10px clamp(18px, 4vw, 32px) 22px; min-height: 140px; display: flex; flex-direction: column; gap: 4px; }
+.slots { display: flex; flex-wrap: wrap; gap: 14px 20px; justify-content: center; }
+.slots .word { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.slot { width: 38px; height: 48px; display: grid; place-items: center; border-bottom: 3px solid var(--line); font: 800 24px/1 var(--font-display); background: none; border-top: 0; border-left: 0; border-right: 0; padding: 0; color: var(--ink); }
+.slot.filled { border-bottom-color: var(--ink); }
+.slot.locked { color: var(--accent); border-bottom-color: var(--accent); cursor: default; }
+.slot.fixed { border-bottom-color: transparent; color: var(--ink-soft); cursor: default; width: auto; min-width: 14px; }
+.slots.solved .slot { color: var(--good); border-bottom-color: var(--good); }
+.slots.revealed .slot { color: var(--bad); }
+.slots.bad { animation: shake .35s; }
+.tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tile { width: 46px; height: 50px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 3px 0 var(--line); font: 800 22px/1 var(--font-display); padding: 0; }
+.tile:hover { border-color: var(--accent); }
+.tile.used { visibility: hidden; }
+
+/* Modal, toast, footer */
+#modal-root { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); }
+.scrim { position: absolute; inset: 0; background: rgba(10, 12, 18, .5); }
+.modal { position: relative; width: min(540px, 100%); max-height: calc(100% - 20px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+.modal textarea { font-family: var(--font-mono); font-size: 13px; min-height: 180px; resize: vertical; }
+#toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; z-index: 60; max-width: min(520px, calc(100% - 32px)); background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 10px; font-weight: 700; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; transform: translateY(8px); }
+#toast.show { opacity: 1; transform: none; }
+.foot { border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; }
+.foot .wrap { padding-block: 18px 28px; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { height: 190px; }
+  .steps { grid-template-columns: 1fr; }
+  .terms li { grid-template-columns: minmax(0, 1fr) auto; }
+  .terms li .td { grid-column: 1 / -1; grid-row: 2; }
+  .ed-row { grid-template-columns: minmax(0, 1fr) 40px; }
+  .ed-num { display: none; }
+  .ed-row .ed-field:nth-of-type(2) { grid-column: 1; }
+  .ed-row .btn { grid-column: 2; grid-row: 1; }
+  .choices { grid-template-columns: 1fr; }
+  .topnav .hide-sm { display: none; }
+  .slot { width: 30px; height: 42px; font-size: 20px; }
+  .tile { width: 40px; height: 46px; font-size: 20px; }
+  .fc-actions { gap: 8px; }
+  .fc-actions kbd, .lt-btns kbd { display: none; }
+  .fc-actions .btn:not(.icon) { padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-inner, .mc-inner, .set-card, .mode-tile, .mbar span { transition: none; }
+  .mtile.bad, .slots.bad { animation: none; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <button class="brand" id="brand" type="button" aria-label="Cramberry home">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="8" width="21" height="16" rx="2" transform="rotate(-9 13 16)" style="fill:var(--surface);stroke:var(--ink-soft)" stroke-width="1.6"/>
+        <rect x="6" y="10" width="21" height="16" rx="2" style="fill:var(--surface);stroke:var(--ink)" stroke-width="1.8"/>
+        <path d="M6 15h21" style="stroke:var(--accent)" stroke-width="1.8"/>
+        <circle cx="21" cy="21" r="4.2" style="fill:var(--accent)"/>
+        <path d="M21 16.8c.4-1.6 1.5-2.6 3-3" style="stroke:var(--good)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      </svg>
+      Cramberry
+    </button>
+    <nav class="topnav" aria-label="Main">
+      <button class="btn ghost sm" id="nav-library" type="button">My sets</button>
+      <button class="btn ghost sm hide-sm" id="nav-import" type="button">Import</button>
+      <button class="btn primary sm" id="nav-new" type="button">New set</button>
+    </nav>
+  </div>
+</header>
+<main id="app"></main>
+<footer class="foot"><div class="wrap" id="foot"></div></footer>
+<div id="modal-root" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+const app = document.getElementById('app');
+const modalRoot = document.getElementById('modal-root');
+const toastEl = document.getElementById('toast');
+const footEl = document.getElementById('foot');
+
+/* ---------- small utilities ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const sideLabel = s => s === 'term' ? 'Term' : 'Definition';
+const other = s => s === 'term' ? 'def' : 'term';
+const LETTER = /[\p{L}\p{N}]/u;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function norm(s) {
+  return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
+}
+function loose(s) {
+  return String(s ?? '').normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
+}
+// Comparison key: ignores case, punctuation and accents; falls back to raw text for symbol-only answers.
+const key = s => norm(s) || String(s ?? '').trim().toLowerCase();
+
+function lev(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Grade a typed answer against the correct text. Forgiving about case, punctuation,
+// a missing parenthetical, alternatives split by "/" or ";", and a one-letter typo.
+function grade(input, target) {
+  const a = key(input);
+  if (!String(input ?? '').trim()) return { ok: false, note: null };
+  const candidates = [target];
+  const noParen = String(target).replace(/\([^)]*\)/g, ' ');
+  if (noParen.trim() && noParen !== target) candidates.push(noParen);
+  if (/[\/;]/.test(target)) String(target).split(/[\/;]/).forEach(p => { if (p.trim()) candidates.push(p); });
+  for (const t of candidates) {
+    if (a === key(t)) {
+      const la = loose(input), lt = loose(t);
+      if (la && lt && la !== lt && norm(input) === norm(t)) return { ok: true, note: 'Watch the accents: ' + t.trim() };
+      return { ok: true, note: null };
+    }
+  }
+  const b = key(target);
+  const d = lev(a, b);
+  if ((b.length >= 6 && d <= 1) || (b.length >= 12 && d <= 2)) return { ok: true, note: 'Close enough. Exact spelling: ' + String(target).trim() };
+  return { ok: false, note: null };
+}
+
+function sizeClass(t) {
+  const n = String(t).length;
+  return n > 160 ? 'sz-s' : n > 60 ? 'sz-m' : 'sz-l';
+}
+function fmtTime(ms) {
+  const s = Math.max(0, ms) / 1000;
+  if (s < 60) return s.toFixed(1) + 's';
+  return Math.floor(s / 60) + ':' + (s % 60).toFixed(1).padStart(4, '0');
+}
+function ago(t) {
+  const d = (Date.now() - t) / 1000;
+  if (d < 60) return 'just now';
+  if (d < 3600) return Math.floor(d / 60) + ' min ago';
+  if (d < 86400) return plural(Math.floor(d / 3600), 'hour') + ' ago';
+  if (d < 86400 * 30) return plural(Math.floor(d / 86400), 'day') + ' ago';
+  return new Date(t).toLocaleDateString();
+}
+function sides(answerWith) {
+  return answerWith === 'def' ? { p: 'term', a: 'def' } : { p: 'def', a: 'term' };
+}
+
+/* ---------- icons ---------- */
+const svg = (inner, s = 20, vb = 24) => `<svg viewBox="0 0 ${vb} ${vb}" width="${s}" height="${s}" aria-hidden="true">${inner}</svg>`;
+const STROKE = 'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';
+const STAR_PATH = 'M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z';
+const ICON = {
+  star: svg(`<path d="${STAR_PATH}" ${STROKE}/>`, 18),
+  starOn: svg(`<path d="${STAR_PATH}" fill="currentColor" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>`, 18),
+  speak: svg(`<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" ${STROKE}/>`, 18),
+  left: svg(`<path d="M14.5 6l-6 6 6 6" ${STROKE}/>`),
+  right: svg(`<path d="M9.5 6l6 6-6 6" ${STROKE}/>`),
+  trash: svg(`<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" ${STROKE}/>`, 18),
+  heart: svg('<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0112 7.4 4.3 4.3 0 0119.5 10c0 5.4-7.5 10-7.5 10z" fill="currentColor"/>', 20),
+};
+const MODE_ICON = {
+  flashcards: svg(`<rect x="5" y="7" width="17" height="12" rx="2" transform="rotate(-8 13 13)" ${STROKE}/><rect x="9" y="11" width="17" height="12" rx="2" style="fill:var(--accent-soft)" stroke="currentColor" stroke-width="1.9"/><path d="M9 15h17" ${STROKE}/>`, 26, 32),
+  learn: svg(`<path d="M16 28V15" ${STROKE}/><path d="M16 16c0-5-4-8-9-8 0 5 4 8 9 8zM16 13c0-4 3-7 8-7 0 4-3 7-8 7z" ${STROKE}/>`, 26, 32),
+  test: svg(`<rect x="7" y="5" width="18" height="23" rx="2" ${STROKE}/><path d="M11 12l2 2 4-4M11 20h10M11 24h7" ${STROKE}/>`, 26, 32),
+  match: svg(`<rect x="4" y="6" width="11" height="11" rx="2" ${STROKE}/><rect x="17" y="15" width="11" height="11" rx="2" ${STROKE}/><path d="M15 11.5h3.5v3.5" ${STROKE}/>`, 26, 32),
+  memory: svg(`<rect x="5" y="5" width="9.5" height="10" rx="2" ${STROKE}/><rect x="17.5" y="5" width="9.5" height="10" rx="2" fill="currentColor"/><rect x="5" y="18" width="9.5" height="10" rx="2" fill="currentColor"/><rect x="17.5" y="18" width="9.5" height="10" rx="2" ${STROKE}/>`, 26, 32),
+  bubble: svg(`<circle cx="12" cy="19" r="7" ${STROKE}/><circle cx="23" cy="10" r="4.5" ${STROKE}/><circle cx="24" cy="24" r="2.5" ${STROKE}/><path d="M9 16a3.5 3.5 0 013-2" ${STROKE}/>`, 26, 32),
+  lightning: svg(`<path d="M18 3L7 18h8l-2 11 12-16h-8z" ${STROKE}/>`, 26, 32),
+  unscramble: svg(`<rect x="3" y="9" width="12" height="14" rx="2" ${STROKE}/><rect x="17" y="9" width="12" height="14" rx="2" ${STROKE}/><text x="9" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor" font-family="sans-serif">B</text><text x="23" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor" font-family="sans-serif">A</text>`, 26, 32),
+};
+
+/* ---------- preferences (per browser) ---------- */
+const PREF_KEY = 'cramberry.prefs.v1';
+let prefs = { answerWith: 'term', fcFront: 'term', starredOnly: {} };
+try {
+  const p = JSON.parse(localStorage.getItem(PREF_KEY) || 'null');
+  if (p && typeof p === 'object') prefs = { ...prefs, ...p, starredOnly: { ...(p.starredOnly || {}) } };
+} catch (e) { /* storage unavailable; defaults are fine */ }
+function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
+
+/* ---------- storage: your account when available, this browser otherwise ---------- */
+const LOCAL_KEY = 'cramberry.sets.v1';
+const MAX_BYTES = 240000;
+const Store = { mode: 'loading', sets: new Map(), col: null, inflight: new Set(), pending: new Set(), timers: new Map() };
+
+function normalizeSet(s, forcedId) {
+  if (!s || typeof s !== 'object' || !Array.isArray(s.cards)) return null;
+  const cards = s.cards.filter(c => c && typeof c === 'object').map(c => ({
+    id: typeof c.id === 'string' && c.id ? c.id : newId(),
+    term: String(c.term ?? ''),
+    def: String(c.def ?? ''),
+  }));
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  return {
+    id: forcedId || (typeof s.id === 'string' && s.id) || newId(),
+    title: String(s.title || 'Untitled set'),
+    description: String(s.description || ''),
+    cards,
+    progress: isObj(s.progress) ? s.progress : {},
+    best: isObj(s.best) ? s.best : {},
+    created: Number(s.created) || Date.now(),
+    updated: Number(s.updated) || Date.now(),
+  };
+}
+const plain = v => JSON.parse(JSON.stringify(v));
+const byteSize = v => new TextEncoder().encode(JSON.stringify(v)).length;
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) arr.forEach(s => { const n = normalizeSet(s); if (n) Store.sets.set(n.id, n); });
+    Store.mode = 'local';
+  } catch (e) {
+    Store.mode = 'memory';
+  }
+}
+function saveLocal() {
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify([...Store.sets.values()]));
+    return true;
+  } catch (e) {
+    if (Store.mode !== 'memory') {
+      Store.mode = 'memory';
+      toast('This browser is blocking storage, so sets will be lost when you close the page. Export them to keep a copy.');
+      renderFoot();
+    }
+    return false;
+  }
+}
+async function withRetry(fn) {
+  try { return await fn(); }
+  catch (e) {
+    if (e && e.code === 'unavailable') {
+      await new Promise(r => setTimeout(r, 500 + Math.random() * 900));
+      return fn();
+    }
+    throw e;
+  }
+}
+async function initStore() {
+  let db = null, user = null, uid = null;
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    }
+  } catch (e) { db = null; }
+  if (db && user) { try { uid = await user.id(); } catch (e) { uid = null; } }
+  if (db && uid) {
+    try {
+      Store.col = db.doc('data/users/' + uid + '/profile').collection('sets');
+      const snap = await withRetry(() => Store.col.get());
+      snap.docs.forEach(d => {
+        if (!d.exists) return;
+        const n = normalizeSet(plain(d.data()), d.id);
+        if (n) Store.sets.set(n.id, n);
+      });
+      Store.mode = 'cloud';
+      migrateLocalSets();
+      return;
+    } catch (e) {
+      Store.sets.clear();
+      Store.col = null;
+    }
+  }
+  loadLocal();
+}
+// Sets saved in this browser earlier (for example before signing in) move into the account.
+function migrateLocalSets() {
+  let arr;
+  try { arr = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (e) { return; }
+  if (!Array.isArray(arr) || !arr.length) return;
+  let moved = 0;
+  arr.forEach(s => {
+    const n = normalizeSet(s);
+    if (n && !Store.sets.has(n.id)) { Store.sets.set(n.id, n); cloudWrite(n.id); moved++; }
+  });
+  try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
+  if (moved) setTimeout(() => toast(`Moved ${plural(moved, 'set')} from this browser into your account.`), 300);
+}
+async function cloudWrite(id) {
+  if (Store.mode !== 'cloud') { saveLocal(); return; }
+  if (Store.inflight.has(id)) { Store.pending.add(id); return; }
+  Store.inflight.add(id);
+  try {
+    do {
+      Store.pending.delete(id);
+      const s = Store.sets.get(id);
+      const ref = Store.col.doc(id);
+      await withRetry(() => s ? ref.set(plain(s)) : ref.delete());
+    } while (Store.pending.has(id) && Store.mode === 'cloud');
+  } catch (e) {
+    handleCloudError(e, id);
+  } finally {
+    Store.inflight.delete(id);
+  }
+}
+function handleCloudError(e, id) {
+  const code = e && e.code;
+  if (code === 'resource_exhausted') { setTimeout(() => cloudWrite(id), 2500); return; }
+  if (code === 'quota_exceeded') { toast('Your saved space is full. Delete a set you no longer need, then try again.'); return; }
+  Store.mode = 'local';
+  saveLocal();
+  toast(code === 'invalid_argument'
+    ? "Your account can't save sets here, so they're now saved in this browser."
+    : "Lost the connection to your account, so sets are now saved in this browser.");
+  renderFoot();
+}
+function persist(set, delay = 0) {
+  set.updated = Date.now();
+  Store.sets.set(set.id, set);
+  if (Store.mode === 'cloud') {
+    clearTimeout(Store.timers.get(set.id));
+    Store.timers.delete(set.id);
+    if (delay) Store.timers.set(set.id, setTimeout(() => { Store.timers.delete(set.id); cloudWrite(set.id); }, delay));
+    else cloudWrite(set.id);
+  } else {
+    saveLocal();
+  }
+}
+function flushPending() {
+  for (const [id, t] of [...Store.timers]) { clearTimeout(t); Store.timers.delete(id); cloudWrite(id); }
+}
+function removeSet(id) {
+  clearTimeout(Store.timers.get(id));
+  Store.timers.delete(id);
+  Store.sets.delete(id);
+  delete prefs.starredOnly[id];
+  savePrefs();
+  if (Store.mode === 'cloud') cloudWrite(id); else saveLocal();
+}
+function storageLabel() {
+  return { cloud: 'Synced to your account', local: 'Saved in this browser', memory: 'Not saved: this browser blocks storage', loading: 'Loading…' }[Store.mode];
+}
+
+/* ---------- progress helpers ---------- */
+const prog = (set, id) => (set.progress && set.progress[id]) || {};
+function setLevel(set, id, l) { set.progress[id] = { ...prog(set, id), l }; }
+function toggleStar(set, id) {
+  const p = { ...prog(set, id) };
+  if (p.s) delete p.s; else p.s = true;
+  set.progress[id] = p;
+  persist(set, 600);
+  return !!p.s;
+}
+function counts(set, cards = set.cards) {
+  let n = 0, l = 0, m = 0;
+  cards.forEach(c => { const v = prog(set, c.id).l || 0; if (v >= 2) m++; else if (v === 1) l++; else n++; });
+  return { n, l, m, total: cards.length };
+}
+function studyCards(set) {
+  const starred = set.cards.filter(c => prog(set, c.id).s);
+  return prefs.starredOnly[set.id] && starred.length ? starred : set.cards;
+}
+function uniqueCards(cards) {
+  const ts = new Set(), ds = new Set(), out = [];
+  for (const c of cards) {
+    const t = key(c.term), d = key(c.def);
+    if (!t || !d || ts.has(t) || ds.has(d)) continue;
+    ts.add(t); ds.add(d); out.push(c);
+  }
+  return out;
+}
+function gameSides(cards) {
+  let t = 0, d = 0;
+  cards.forEach(c => { t += c.term.length; d += c.def.length; });
+  return t <= d ? { show: 'term', clue: 'def' } : { show: 'def', clue: 'term' };
+}
+function mcOptions(card, side, pool, n = 4) {
+  const seen = new Set([key(card[side])]);
+  const out = [card[side]];
+  for (const c of shuffle(pool)) {
+    if (out.length >= n) break;
+    const k = key(c[side]);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(c[side]);
+  }
+  return shuffle(out);
+}
+const letterCount = s => [...String(s)].filter(ch => LETTER.test(ch)).length;
+function scrambleEligible(cards, gs) {
+  return cards.filter(c => { const n = letterCount(c[gs.show]); return n >= 2 && n <= 20; });
+}
+const matchPairs = cards => Math.min(6, uniqueCards(cards).length);
+const memoryPairs = cards => { const u = uniqueCards(cards).length; return [8, 6, 4, 3, 2].find(p => p <= u) || 0; };
+function recordBest(set, game, sub, val, lowerIsBetter) {
+  const g = (set.best[game] && typeof set.best[game] === 'object') ? { ...set.best[game] } : {};
+  const prev = g[sub];
+  const isNew = prev == null || (lowerIsBetter ? val < prev : val > prev);
+  if (isNew) { g[sub] = val; set.best = { ...set.best, [game]: g }; persist(set); }
+  return { best: isNew ? val : prev, isNew, hadPrev: prev != null };
+}
+const bestOf = (set, game, sub) => set.best && set.best[game] && set.best[game][sub];
+
+/* ---------- toast & modal ---------- */
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4200);
+}
+let lastFocus = null;
+function openModal(html, onMount) {
+  lastFocus = document.activeElement;
+  modalRoot.innerHTML = `<div class="scrim" data-close></div><div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  modalRoot.hidden = false;
+  modalRoot.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+  const m = modalRoot.querySelector('.modal');
+  if (onMount) onMount(m);
+  const f = m.querySelector('[data-autofocus]') || m.querySelector('button');
+  if (f) f.focus();
+}
+function closeModal() {
+  if (modalRoot.hidden) return;
+  modalRoot.hidden = true;
+  modalRoot.innerHTML = '';
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+function confirmBox({ title, body, ok, danger, onOk }) {
+  openModal(`<h2>${esc(title)}</h2><p class="muted">${esc(body)}</p>
+    <div class="row end"><button class="btn" type="button" data-close data-autofocus>Cancel</button>
+    <button class="btn ${danger ? 'danger-fill' : 'primary'}" type="button" id="cf-ok">${esc(ok)}</button></div>`, m => {
+    m.querySelector('#cf-ok').addEventListener('click', () => { closeModal(); onOk(); });
+  });
+}
+
+/* ---------- routing ---------- */
+let route = { view: 'library' };
+let cleanupFns = [];
+let keyHandler = null;
+let leaveGuard = null;
+function onCleanup(fn) { cleanupFns.push(fn); }
+function later(fn, ms) { const t = setTimeout(fn, ms); onCleanup(() => clearTimeout(t)); return t; }
+function loop(step) {
+  let id = 0, last = performance.now(), live = true;
+  const frame = now => {
+    if (!live) return;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (step(now, dt) === false) { live = false; return; }
+    id = requestAnimationFrame(frame);
+  };
+  id = requestAnimationFrame(frame);
+  const stop = () => { live = false; cancelAnimationFrame(id); };
+  onCleanup(stop);
+  return stop;
+}
+function go(r) {
+  flushPending();
+  cleanupFns.forEach(fn => { try { fn(); } catch (e) { /* ignore */ } });
+  cleanupFns = [];
+  keyHandler = null;
+  leaveGuard = null;
+  closeModal();
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  route = r;
+  render();
+  window.scrollTo(0, 0);
+}
+function navigate(r) {
+  if (leaveGuard && leaveGuard()) {
+    confirmBox({ title: 'Leave without saving?', body: 'Your changes to this set will be lost.', ok: 'Discard changes', danger: true, onOk: () => go(r) });
+    return;
+  }
+  go(r);
+}
+function render() {
+  const set = route.setId ? Store.sets.get(route.setId) : null;
+  if (route.view !== 'library' && route.view !== 'edit' && !set && Store.mode !== 'loading') { route = { view: 'library' }; }
+  if (Store.mode === 'loading' && route.view !== 'library') route = { view: 'library' };
+  const views = { library: viewLibrary, set: viewSet, edit: viewEdit, flashcards: viewFlashcards, learn: viewLearn, test: viewTest, match: viewMatch, memory: viewMemory, bubble: viewBubble, lightning: viewLightning, unscramble: viewUnscramble };
+  (views[route.view] || viewLibrary)(set);
+  document.getElementById('nav-library').classList.toggle('on', route.view === 'library');
+}
+function renderFoot() {
+  footEl.textContent = `${storageLabel()}. Export any set to keep a copy as a spreadsheet or text file.`;
+  if (route.view === 'library' && Store.mode !== 'loading') {
+    const lab = app.querySelector('#storage-label');
+    if (lab) lab.textContent = storageLabel();
+  }
+}
+const isTyping = t => t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]');
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !modalRoot.hidden) { closeModal(); return; }
+  if (!modalRoot.hidden || !keyHandler) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('button, a, summary') && !e.target.closest('[data-keyok]')) return;
+  keyHandler(e);
+});
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-back]');
+  if (b) navigate(route.setId && Store.sets.get(route.setId) ? { view: 'set', setId: route.setId } : { view: 'library' });
+});
+document.getElementById('brand').addEventListener('click', () => navigate({ view: 'library' }));
+document.getElementById('nav-library').addEventListener('click', () => navigate({ view: 'library' }));
+document.getElementById('nav-new').addEventListener('click', () => navigate({ view: 'edit' }));
+document.getElementById('nav-import').addEventListener('click', () => navigate({ view: 'edit', importOpen: true }));
+const $ = sel => app.querySelector(sel);
+function bind(sel, fn, ev = 'click') { const el = $(sel); if (el) el.addEventListener(ev, fn); return el; }
+
+/* ---------- example set ---------- */
+function makeExample() {
+  const rows = [
+    ['Mitochondrion', "Organelle that makes most of the cell's ATP through cellular respiration"],
+    ['Ribosome', 'Builds proteins by reading messenger RNA'],
+    ['Nucleus', "Membrane-bound compartment that holds the cell's DNA"],
+    ['Cell membrane', 'Phospholipid bilayer that controls what enters and leaves the cell'],
+    ['Chloroplast', 'Plant organelle where photosynthesis happens'],
+    ['Golgi apparatus', 'Modifies, sorts, and packages proteins for transport'],
+    ['Lysosome', 'Sac of digestive enzymes that breaks down waste and worn-out parts'],
+    ['Endoplasmic reticulum', 'Folded membrane network; the rough kind is studded with ribosomes'],
+    ['Cytoplasm', 'Gel-like fluid that fills the cell and surrounds the organelles'],
+    ['Vacuole', 'Storage sac; one large central one in plant cells'],
+    ['Cell wall', 'Rigid layer outside the membrane of plant cells, made mostly of cellulose'],
+    ['Osmosis', 'Diffusion of water across a selectively permeable membrane'],
+  ];
+  return normalizeSet({
+    title: 'Cell Biology (example)',
+    description: 'A sample set to try the study modes. Edit it or delete it whenever you like.',
+    cards: rows.map(([term, def]) => ({ id: newId(), term, def })),
+  });
+}
+
+/* ---------- view: library ---------- */
+function setCard(s) {
+  const c = counts(s);
+  const pct = v => (c.total ? (v / c.total) * 100 : 0).toFixed(1);
+  return `<button class="set-card" type="button" data-open="${esc(s.id)}">
+    <span class="t">${esc(s.title)}</span>
+    <span class="mbar" role="img" aria-label="${c.m} mastered, ${c.l} learning, ${c.n} new"><span class="m-done" style="width:${pct(c.m)}%"></span><span class="m-learn" style="width:${pct(c.l)}%"></span></span>
+    <span class="meta">${plural(c.total, 'term')} · ${c.m} mastered · edited ${esc(ago(s.updated))}</span>
+  </button>`;
+}
+function viewLibrary() {
+  if (Store.mode === 'loading') {
+    app.innerHTML = `<div class="wrap page"><p class="muted">Loading your sets…</p></div>`;
+    return;
+  }
+  const sets = [...Store.sets.values()].sort((a, b) => b.updated - a.updated);
+  if (!sets.length) {
+    app.innerHTML = `<div class="wrap page">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Flashcards · quizzes · games</p>
+          <h1>Turn any word list into <span class="hl">cards you actually remember</span>.</h1>
+          <p class="lede">Paste terms from your notes, a doc, or a spreadsheet. Cramberry splits them into flashcards, then quizzes you with study modes and games until they stick.</p>
+          <div class="row">
+            <button class="btn primary big" type="button" id="lib-import">Import terms</button>
+            <button class="btn big" type="button" id="lib-example">Try an example set</button>
+          </div>
+          <p class="muted" id="storage-label">${esc(storageLabel())}</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-card indexcard"></div>
+          <div class="art-card indexcard"></div>
+          <div class="art-card indexcard"><span class="fc-label">Term</span><span class="w">osmosis</span></div>
+          <div class="art-sticky">12 / 12 mastered</div>
+        </div>
+      </section>
+      <section class="section">
+        <h2>How importing works</h2>
+        <ol class="steps">
+          <li><b>Paste your list</b><span class="muted">One card per line, with a tab, comma, dash, or colon between the term and its definition. CSV files work too.</span></li>
+          <li><b>Check the preview</b><span class="muted">Cramberry guesses the separator and shows the cards it found, so you can fix things before saving.</span></li>
+          <li><b>Pick a way to study</b><span class="muted">Flip flashcards, run Learn rounds, take a practice test, or play one of five games.</span></li>
+        </ol>
+      </section>
+    </div>`;
+    bind('#lib-import', () => navigate({ view: 'edit', importOpen: true }));
+    bind('#lib-example', () => {
+      const s = makeExample();
+      persist(s);
+      go({ view: 'set', setId: s.id });
+      toast('Added an example set. Edit or delete it any time.');
+    });
+    return;
+  }
+  app.innerHTML = `<div class="wrap page">
+    <div class="lib-head">
+      <div class="stack" style="gap:6px"><h1>My sets</h1><p class="muted">${plural(sets.length, 'set')} · <span id="storage-label">${esc(storageLabel())}</span></p></div>
+      <div class="row"><button class="btn" type="button" id="lib-import">Import terms</button><button class="btn primary" type="button" id="lib-new">New set</button></div>
+    </div>
+    <div class="set-grid">${sets.map(setCard).join('')}<button class="set-card new" type="button" id="lib-new2">+ Create a set</button></div>
+  </div>`;
+  bind('#lib-import', () => navigate({ view: 'edit', importOpen: true }));
+  bind('#lib-new', () => navigate({ view: 'edit' }));
+  bind('#lib-new2', () => navigate({ view: 'edit' }));
+  app.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => go({ view: 'set', setId: b.dataset.open })));
+}
+
+/* ---------- view: set ---------- */
+const MODES = [
+  { id: 'flashcards', group: 'study', name: 'Flashcards', blurb: 'Flip through cards and sort what you know from what you don’t.' },
+  { id: 'learn', group: 'study', name: 'Learn', blurb: 'Multiple choice first, then type the answer. Repeats until you’ve mastered every card.' },
+  { id: 'test', group: 'study', name: 'Practice test', blurb: 'A graded mix of multiple choice, true/false, and written questions.' },
+  { id: 'match', group: 'game', name: 'Match', blurb: 'Pair every term with its definition against the clock.' },
+  { id: 'memory', group: 'game', name: 'Memory Flip', blurb: 'Cards start face down. Find each term’s partner in as few moves as you can.' },
+  { id: 'bubble', group: 'game', name: 'Bubble Pop', blurb: 'Pop the right answer before it floats off the top. Three lives.' },
+  { id: 'lightning', group: 'game', name: 'Lightning Round', blurb: '60 seconds of match or no match. Streaks multiply your score.' },
+  { id: 'unscramble', group: 'game', name: 'Unscramble', blurb: 'Rebuild each word from its shuffled letters using the clue.' },
+];
+function modeBlocked(set, id) {
+  const cards = studyCards(set);
+  if (id === 'flashcards') return cards.length ? null : 'Needs at least 1 card';
+  if (id === 'learn' || id === 'test') return cards.length >= 2 ? null : 'Needs at least 2 cards';
+  if (id === 'unscramble') return scrambleEligible(cards, gameSides(cards)).length ? null : 'Needs a card whose shorter side has 2–20 letters';
+  return uniqueCards(cards).length >= 2 ? null : 'Needs 2 cards with different terms and definitions';
+}
+function bestLabel(set, id) {
+  const cards = studyCards(set);
+  let v;
+  switch (id) {
+    case 'match': v = bestOf(set, 'match', String(matchPairs(cards))); return v != null ? 'Best ' + fmtTime(v) : '';
+    case 'memory': v = bestOf(set, 'memory', String(memoryPairs(cards))); return v != null ? 'Best ' + plural(v, 'move') : '';
+    case 'bubble': case 'lightning': case 'unscramble': v = bestOf(set, id, 'score'); return v != null ? 'Best ' + v + ' pts' : '';
+    default: return '';
+  }
+}
+function modeTile(set, m) {
+  const blocked = modeBlocked(set, m.id);
+  const best = bestLabel(set, m.id);
+  return `<button class="mode-tile" type="button" data-mode="${m.id}" ${blocked ? 'disabled' : ''}>
+    <span class="ic">${MODE_ICON[m.id]}</span>
+    <span class="n">${m.name}</span>
+    <span class="d">${blocked ? esc(blocked) : m.blurb}</span>
+    ${best ? `<span class="best">${esc(best)}</span>` : ''}
+  </button>`;
+}
+function viewSet(set) {
+  const c = counts(set);
+  const starredCount = set.cards.filter(x => prog(set, x.id).s).length;
+  const starOn = !!prefs.starredOnly[set.id] && starredCount > 0;
+  const pct = v => (c.total ? (v / c.total) * 100 : 0).toFixed(1);
+  const lvlTag = l => l >= 2 ? '<span class="lvl l2">Mastered</span>' : l === 1 ? '<span class="lvl l1">Learning</span>' : '';
+  app.innerHTML = `<div class="wrap page">
+    <button class="back" type="button" id="to-lib">${ICON.left} My sets</button>
+    <header class="set-head">
+      <div>
+        <h1>${esc(set.title)}</h1>
+        ${set.description ? `<p class="muted">${esc(set.description)}</p>` : ''}
+        <p class="muted mono" style="font-size:13px">${plural(set.cards.length, 'term')}</p>
+      </div>
+      <div class="row">
+        <button class="btn" type="button" id="s-edit">Edit</button>
+        <button class="btn" type="button" id="s-export">Export</button>
+        <button class="btn ghost danger" type="button" id="s-delete">Delete</button>
+      </div>
+    </header>
+    <section class="panel">
+      <div class="section-head"><h2>Your progress</h2>${c.m || c.l ? '<button class="link" type="button" id="s-reset">Reset progress</button>' : ''}</div>
+      <div class="mbar big" role="img" aria-label="${c.m} mastered, ${c.l} learning, ${c.n} new"><span class="m-done" style="width:${pct(c.m)}%"></span><span class="m-learn" style="width:${pct(c.l)}%"></span></div>
+      <div class="legend">
+        <span><i style="background:var(--good)"></i>${c.m} mastered</span>
+        <span><i style="background:var(--learning)"></i>${c.l} learning</span>
+        <span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>${c.n} not started</span>
+      </div>
+      <p class="muted" style="font-size:14px">Learn mode moves cards along: a right multiple-choice answer makes a card “learning”, a right typed answer makes it “mastered”. A miss sends it back to the start.</p>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2>Study</h2>
+        ${starredCount ? `<label class="toggle"><input type="checkbox" id="s-staronly" ${starOn ? 'checked' : ''}> Only starred cards (${starredCount})</label>` : ''}
+      </div>
+      <div class="mode-grid">${MODES.filter(m => m.group === 'study').map(m => modeTile(set, m)).join('')}</div>
+    </section>
+    <section class="section">
+      <h2>Games</h2>
+      <div class="mode-grid">${MODES.filter(m => m.group === 'game').map(m => modeTile(set, m)).join('')}</div>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2>Terms in this set</h2><span class="muted" style="font-size:14px">Star cards to study them on their own</span></div>
+      <ul class="terms">${set.cards.map(card => {
+        const p = prog(set, card.id);
+        return `<li><div class="stack" style="gap:6px"><span class="tt">${esc(card.term)}</span>${lvlTag(p.l || 0)}</div><span class="td">${esc(card.def)}</span>
+          <button class="btn ghost sm icon star ${p.s ? 'on' : ''}" type="button" data-star="${esc(card.id)}" aria-pressed="${p.s ? 'true' : 'false'}" aria-label="Star ${esc(card.term)}">${p.s ? ICON.starOn : ICON.star}</button></li>`;
+      }).join('')}</ul>
+    </section>
+  </div>`;
+  bind('#to-lib', () => navigate({ view: 'library' }));
+  bind('#s-edit', () => go({ view: 'edit', setId: set.id }));
+  bind('#s-export', () => openExport(set));
+  bind('#s-delete', () => confirmBox({
+    title: `Delete “${set.title}”?`,
+    body: `This removes ${plural(set.cards.length, 'card')} and your progress on them. It can’t be undone.`,
+    ok: 'Delete set', danger: true,
+    onOk: () => { removeSet(set.id); go({ view: 'library' }); toast(`Deleted “${set.title}”.`); },
+  }));
+  bind('#s-reset', () => confirmBox({
+    title: 'Reset progress?', body: 'Every card goes back to “not started”. Your stars and best scores stay.', ok: 'Reset progress', danger: true,
+    onOk: () => {
+      const np = {};
+      Object.keys(set.progress).forEach(id => { if (set.progress[id] && set.progress[id].s) np[id] = { s: true }; });
+      set.progress = np;
+      persist(set);
+      go({ view: 'set', setId: set.id });
+    },
+  }));
+  bind('#s-staronly', e => { prefs.starredOnly[set.id] = e.target.checked; savePrefs(); go({ view: 'set', setId: set.id }); }, 'change');
+  app.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => go({ view: b.dataset.mode, setId: set.id })));
+  app.querySelectorAll('[data-star]').forEach(b => b.addEventListener('click', () => {
+    const on = toggleStar(set, b.dataset.star);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.innerHTML = on ? ICON.starOn : ICON.star;
+    const scroll = window.scrollY;
+    const hadToggle = !!$('#s-staronly');
+    const nowAny = set.cards.some(x => prog(set, x.id).s);
+    if (hadToggle !== nowAny || (prefs.starredOnly[set.id] && hadToggle)) { go({ view: 'set', setId: set.id }); window.scrollTo(0, scroll); }
+  }));
+}
+
+/* ---------- export ---------- */
+let downloadsP = null;
+function getDownloads() {
+  if (!downloadsP) {
+    downloadsP = (window.claude && typeof window.claude.use === 'function')
+      ? Promise.resolve(window.claude.use('downloads')).catch(() => null)
+      : Promise.resolve({
+        // Outside Claude (the standalone copy), a plain browser download works.
+        save: ({ filename, data }) => {
+          const url = URL.createObjectURL(new Blob([data], { type: 'text/csv;charset=utf-8' }));
+          const a = document.createElement('a');
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          return Promise.resolve({ status: 'saved' });
+        },
+      });
+  }
+  return downloadsP;
+}
+function csvCell(s) { return '"' + String(s).replace(/"/g, '""') + '"'; }
+function openExport(set) {
+  const tsv = set.cards.map(c => `${c.term.replace(/[\t\r\n]+/g, ' ')}\t${c.def.replace(/[\t\r\n]+/g, ' ')}`).join('\n');
+  openModal(`<h2>Export “${esc(set.title)}”</h2>
+    <p class="muted">One card per line, with a tab between term and definition. Paste it into a spreadsheet, a doc, or back into Cramberry.</p>
+    <label class="sr" for="ex-text">Exported cards</label>
+    <textarea id="ex-text" readonly>${esc(tsv)}</textarea>
+    <div class="row end">
+      <button class="btn" type="button" data-close>Close</button>
+      <button class="btn" type="button" id="ex-dl" hidden>Download .csv</button>
+      <button class="btn primary" type="button" id="ex-copy" data-autofocus>Copy</button>
+    </div>`, m => {
+    const ta = m.querySelector('#ex-text');
+    m.querySelector('#ex-copy').addEventListener('click', () => {
+      const fallback = () => { ta.focus(); ta.select(); toast('Selected. Press Ctrl+C (or ⌘C on a Mac) to copy.'); };
+      try {
+        navigator.clipboard.writeText(tsv).then(() => toast(`Copied ${plural(set.cards.length, 'card')}.`), fallback);
+      } catch (e) { fallback(); }
+    });
+    getDownloads().then(dl => {
+      const btn = m.querySelector('#ex-dl');
+      if (!dl || !btn) return;
+      btn.hidden = false;
+      btn.addEventListener('click', async () => {
+        const csv = 'term,definition\n' + set.cards.map(c => csvCell(c.term) + ',' + csvCell(c.def)).join('\n');
+        const name = (set.title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'cramberry-set') + '.csv';
+        try {
+          await dl.save({ filename: name, data: csv });
+          toast('Saved ' + name);
+        } catch (e) {
+          if (e && e.code === 'declined') return;
+          if (e && e.code === 'rate_limited') { toast('A save prompt is already open.'); return; }
+          toast('Downloading isn’t available here. Use Copy instead.');
+          btn.hidden = true;
+        }
+      });
+    });
+  });
+}
+
+/* ---------- import parsing ---------- */
+const TERM_SEPS = { tab: '\t', comma: ',', dash: /\s+[-–—]+\s+/, colon: ':' };
+const CARD_SEPS = { newline: '\n', semicolon: ';' };
+function findSep(line, sep) {
+  if (sep instanceof RegExp) { const m = line.match(sep); return m ? { i: m.index, len: m[0].length } : null; }
+  const i = line.indexOf(sep);
+  return i < 0 ? null : { i, len: sep.length };
+}
+const HEAD_T = ['term', 'terms', 'word', 'words', 'front', 'question', 'vocab', 'vocabulary'];
+const HEAD_D = ['definition', 'definitions', 'meaning', 'meanings', 'back', 'answer', 'answers', 'def'];
+function dropHeader(cards) {
+  if (cards.length && HEAD_T.includes(norm(cards[0].term)) && HEAD_D.includes(norm(cards[0].def))) cards.shift();
+  return cards;
+}
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', q = false, startOfField = true;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += ch;
+    } else if (ch === '"' && startOfField) { q = true; startOfField = false; }
+    else if (ch === ',') { row.push(field); field = ''; startOfField = true; }
+    else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; startOfField = true; }
+    else { field += ch; if (ch !== ' ') startOfField = false; }
+  }
+  row.push(field); rows.push(row);
+  const cards = []; let skipped = 0;
+  rows.forEach(r => {
+    if (r.length === 1 && !r[0].trim()) return;
+    const term = (r[0] || '').trim(), def = r.slice(1).join(',').trim();
+    if (r.length < 2 || !term || !def) { skipped++; return; }
+    cards.push({ term, def });
+  });
+  return { cards: dropHeader(cards), skipped };
+}
+function parseImport(text, termSep, cardSep) {
+  text = text.replace(/\r\n?/g, '\n');
+  if (termSep === ',' && cardSep === '\n') return parseCSV(text);
+  const chunks = text.split(cardSep);
+  const cards = []; let skipped = 0;
+  for (const raw of chunks) {
+    const line = raw.trim();
+    if (!line) continue;
+    const f = findSep(line, termSep);
+    if (!f) { skipped++; continue; }
+    const term = line.slice(0, f.i).trim(), def = line.slice(f.i + f.len).trim();
+    if (!term || !def) { skipped++; continue; }
+    cards.push({ term, def });
+  }
+  return { cards: dropHeader(cards), skipped };
+}
+function detectSeps(text) {
+  text = text.replace(/\r\n?/g, '\n');
+  let lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return null;
+  let card = 'newline';
+  if (lines.length <= 2 && (text.match(/;/g) || []).length >= 2) {
+    card = 'semicolon';
+    lines = text.split(';').map(l => l.trim()).filter(Boolean);
+  }
+  const sample = lines.slice(0, 60);
+  const share = re => sample.filter(l => re.test(l)).length / sample.length;
+  let term = null;
+  if (share(/\t/) >= 0.5) term = 'tab';
+  else if (share(/\s[-–—]+\s/) >= 0.6) term = 'dash';
+  else if (share(/:/) >= 0.6) term = 'colon';
+  else if (share(/,/) >= 0.6) term = 'comma';
+  return term ? { term, card } : { term: null, card };
+}
+
+/* ---------- view: editor ---------- */
+function viewEdit() {
+  const existing = route.setId ? Store.sets.get(route.setId) : null;
+  const blank = () => ({ id: newId(), term: '', def: '' });
+  const ed = {
+    title: existing ? existing.title : '',
+    desc: existing ? existing.description : '',
+    rows: existing ? existing.cards.map(c => ({ ...c })) : [blank(), blank(), blank()],
+    dirty: false,
+  };
+  leaveGuard = () => ed.dirty;
+  const importOpen = !!route.importOpen;
+  app.innerHTML = `<div class="wrap narrow page">
+    <button class="back" type="button" id="ed-back">${ICON.left} ${existing ? esc(existing.title) : 'My sets'}</button>
+    <h1>${existing ? 'Edit set' : 'New set'}</h1>
+    <div class="stack">
+      <label class="field" for="ed-title">Title<input id="ed-title" type="text" maxlength="120" placeholder="Spanish chapter 4, AP Bio unit 2…" value="${esc(ed.title)}"></label>
+      <label class="field" for="ed-desc"><span>Description <span class="muted" style="font-weight:400">(optional)</span></span><input id="ed-desc" type="text" maxlength="300" value="${esc(ed.desc)}"></label>
+    </div>
+    <details class="import" id="imp" ${importOpen ? 'open' : ''}>
+      <summary>Import from text or a file</summary>
+      <div class="import-body">
+        <label class="sr" for="imp-text">Text to import</label>
+        <textarea id="imp-text" spellcheck="false" placeholder="photosynthesis&#9;How plants turn light into sugar&#10;osmosis&#9;Water moving across a membrane&#10;&#10;Copy two columns from a spreadsheet, or type one card per line."></textarea>
+        <div class="seps">
+          <fieldset>
+            <legend>Between term and definition</legend>
+            <div class="chips">
+              ${[['tab', 'Tab'], ['comma', 'Comma'], ['dash', 'Dash ( - )'], ['colon', 'Colon'], ['custom', 'Custom']].map(([v, l], i) =>
+                `<label class="chip"><input type="radio" name="tsep" id="tsep-${v}" value="${v}" ${i === 0 ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+              <label class="sr" for="tsep-custom-val">Custom term separator</label><input type="text" class="custom-sep" id="tsep-custom-val" placeholder="e.g. =" maxlength="10">
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Between cards</legend>
+            <div class="chips">
+              ${[['newline', 'New line'], ['semicolon', 'Semicolon'], ['custom', 'Custom']].map(([v, l], i) =>
+                `<label class="chip"><input type="radio" name="csep" id="csep-${v}" value="${v}" ${i === 0 ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+              <label class="sr" for="csep-custom-val">Custom card separator</label><input type="text" class="custom-sep" id="csep-custom-val" placeholder="e.g. |" maxlength="10">
+            </div>
+          </fieldset>
+        </div>
+        <div class="row">
+          <label class="btn filebtn" for="imp-file">Open a file (.csv, .tsv, .txt)<input type="file" id="imp-file" accept=".csv,.tsv,.txt,text/plain,text/csv,text/tab-separated-values"></label>
+          <span class="muted" style="font-size:14px">Files stay on your device until you save the set.</span>
+        </div>
+        <div id="imp-preview" aria-live="polite"></div>
+        <div class="row"><button class="btn primary" type="button" id="imp-add" disabled>Add cards</button></div>
+      </div>
+    </details>
+    <div class="ed-tools">
+      <h2 id="ed-count"></h2>
+      <button class="btn sm" type="button" id="ed-swap">Swap terms and definitions</button>
+    </div>
+    <ol class="ed-rows" id="ed-rows"></ol>
+    <div class="row"><button class="btn" type="button" id="ed-add">+ Add a card</button></div>
+    <div class="ed-foot">
+      <span class="err" id="ed-err" role="alert"></span>
+      <button class="btn" type="button" id="ed-cancel">Cancel</button>
+      <button class="btn primary" type="button" id="ed-save">${existing ? 'Save changes' : 'Create set'}</button>
+    </div>
+  </div>`;
+
+  const list = $('#ed-rows');
+  const rowHTML = (r, i) => `<li class="ed-row" data-i="${i}">
+      <span class="ed-num mono">${i + 1}</span>
+      <label class="ed-field"><textarea rows="1" data-f="term" aria-label="Term ${i + 1}">${esc(r.term)}</textarea><small>Term</small></label>
+      <label class="ed-field"><textarea rows="1" data-f="def" aria-label="Definition ${i + 1}">${esc(r.def)}</textarea><small>Definition</small></label>
+      <button class="btn ghost icon" type="button" data-del="${i}" aria-label="Delete card ${i + 1}">${ICON.trash}</button>
+    </li>`;
+  const grow = ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 2 + 'px'; };
+  const updateCount = () => {
+    const n = ed.rows.filter(r => r.term.trim() || r.def.trim()).length;
+    $('#ed-count').textContent = plural(n, 'card');
+  };
+  const drawRows = () => {
+    list.innerHTML = ed.rows.map(rowHTML).join('');
+    list.querySelectorAll('textarea').forEach(ta => { if (ta.value.length > 30 || ta.value.includes('\n')) grow(ta); });
+    updateCount();
+  };
+  const addRow = focus => {
+    ed.rows.push(blank());
+    list.insertAdjacentHTML('beforeend', rowHTML(ed.rows[ed.rows.length - 1], ed.rows.length - 1));
+    updateCount();
+    if (focus) { const ta = list.lastElementChild.querySelector('textarea'); ta.focus(); ta.scrollIntoView({ block: 'nearest' }); }
+  };
+  drawRows();
+
+  bind('#ed-title', e => { ed.title = e.target.value; ed.dirty = true; }, 'input');
+  bind('#ed-desc', e => { ed.desc = e.target.value; ed.dirty = true; }, 'input');
+  list.addEventListener('input', e => {
+    const ta = e.target.closest('textarea'); if (!ta) return;
+    const li = ta.closest('.ed-row');
+    ed.rows[+li.dataset.i][ta.dataset.f] = ta.value;
+    ed.dirty = true;
+    li.classList.remove('err');
+    grow(ta);
+    updateCount();
+  });
+  list.addEventListener('keydown', e => {
+    const ta = e.target.closest('textarea'); if (!ta) return;
+    const li = ta.closest('.ed-row');
+    if (e.key === 'Tab' && !e.shiftKey && ta.dataset.f === 'def' && +li.dataset.i === ed.rows.length - 1) { e.preventDefault(); addRow(true); }
+  });
+  list.addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    ed.rows.splice(+b.dataset.del, 1);
+    if (!ed.rows.length) ed.rows.push(blank());
+    ed.dirty = true;
+    drawRows();
+  });
+  bind('#ed-add', () => addRow(true));
+  bind('#ed-swap', () => {
+    ed.rows.forEach(r => { const t = r.term; r.term = r.def; r.def = t; });
+    ed.dirty = true;
+    drawRows();
+    toast('Swapped terms and definitions.');
+  });
+
+  // Import panel
+  const impText = $('#imp-text'), preview = $('#imp-preview'), addBtn = $('#imp-add');
+  let parsed = { cards: [], skipped: 0 };
+  const radio = name => (app.querySelector(`input[name="${name}"]:checked`) || {}).value;
+  const currentSeps = () => {
+    const t = radio('tsep'), c = radio('csep');
+    const term = t === 'custom' ? ($('#tsep-custom-val').value || null) : TERM_SEPS[t];
+    const card = c === 'custom' ? ($('#csep-custom-val').value || '\n') : CARD_SEPS[c];
+    return { term, card };
+  };
+  const updatePreview = () => {
+    const text = impText.value;
+    if (!text.trim()) {
+      parsed = { cards: [], skipped: 0 };
+      preview.innerHTML = `<p class="muted">Paste your list above and a preview of the cards appears here.</p>`;
+      addBtn.disabled = true; addBtn.textContent = 'Add cards';
+      return;
+    }
+    const s = currentSeps();
+    if (!s.term) {
+      parsed = { cards: [], skipped: 0 };
+      preview.innerHTML = `<p class="err">Type the custom separator that goes between each term and definition.</p>`;
+      addBtn.disabled = true; addBtn.textContent = 'Add cards';
+      return;
+    }
+    parsed = parseImport(text, s.term, s.card);
+    const n = parsed.cards.length;
+    const sk = parsed.skipped ? ` <span class="muted">· ${plural(parsed.skipped, 'line')} skipped because no separator was found</span>` : '';
+    preview.innerHTML = n
+      ? `<p><strong>${plural(n, 'card')} found</strong>${sk}</p>
+         <div class="imp-table-wrap"><table class="imp-table"><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
+         ${parsed.cards.slice(0, 6).map(c => `<tr><td>${esc(c.term)}</td><td>${esc(c.def)}</td></tr>`).join('')}
+         </tbody></table></div>${n > 6 ? `<p class="muted">and ${n - 6} more</p>` : ''}`
+      : `<p class="err">No cards found. Pick the separator your list uses between each term and its definition.</p>${sk ? `<p class="muted">${plural(parsed.skipped, 'line')} had no separator.</p>` : ''}`;
+    addBtn.disabled = !n;
+    addBtn.textContent = n ? `Add ${plural(n, 'card')}` : 'Add cards';
+  };
+  const applyDetect = () => {
+    const d = detectSeps(impText.value);
+    if (!d) return;
+    if (d.term) { const r = app.querySelector(`#tsep-${d.term}`); if (r) r.checked = true; }
+    const rc = app.querySelector(`#csep-${d.card}`); if (rc) rc.checked = true;
+  };
+  let pt = null;
+  impText.addEventListener('input', () => { clearTimeout(pt); pt = setTimeout(updatePreview, 150); });
+  impText.addEventListener('paste', () => setTimeout(() => { applyDetect(); updatePreview(); }, 0));
+  app.querySelectorAll('input[name="tsep"], input[name="csep"]').forEach(r => r.addEventListener('change', updatePreview));
+  ['#tsep-custom-val', '#csep-custom-val'].forEach(sel => bind(sel, e => {
+    const which = sel.startsWith('#tsep') ? '#tsep-custom' : '#csep-custom';
+    if (e.target.value) $(which).checked = true;
+    updatePreview();
+  }, 'input'));
+  bind('#imp-file', e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { preview.innerHTML = `<p class="err">That file is over 5 MB. Split it into smaller files and import them one at a time.</p>`; e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      impText.value = String(reader.result || '');
+      if (/\.csv$/i.test(f.name) && !impText.value.includes('\t')) { $('#tsep-comma').checked = true; $('#csep-newline').checked = true; }
+      else applyDetect();
+      updatePreview();
+      e.target.value = '';
+    };
+    reader.onerror = () => { preview.innerHTML = `<p class="err">Couldn’t read that file. Try saving it as .csv or .txt.</p>`; };
+    reader.readAsText(f);
+  }, 'change');
+  bind('#imp-add', () => {
+    if (!parsed.cards.length) return;
+    while (ed.rows.length && !ed.rows[ed.rows.length - 1].term.trim() && !ed.rows[ed.rows.length - 1].def.trim()) ed.rows.pop();
+    const room = 2000 - ed.rows.length;
+    const add = parsed.cards.slice(0, Math.max(0, room));
+    add.forEach(c => ed.rows.push({ id: newId(), term: c.term, def: c.def }));
+    if (!ed.rows.length) ed.rows.push(blank());
+    ed.dirty = true;
+    drawRows();
+    impText.value = '';
+    updatePreview();
+    $('#imp').open = false;
+    toast(add.length < parsed.cards.length
+      ? `Added ${plural(add.length, 'card')}. A set holds up to 2,000 cards, so the rest were left out.`
+      : `Added ${plural(add.length, 'card')}. Check them below, then save.`);
+    $('#ed-count').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  updatePreview();
+
+  const leave = () => navigate(existing ? { view: 'set', setId: existing.id } : { view: 'library' });
+  bind('#ed-back', leave);
+  bind('#ed-cancel', leave);
+  bind('#ed-save', () => {
+    const errEl = $('#ed-err');
+    errEl.textContent = '';
+    list.querySelectorAll('.ed-row.err').forEach(li => li.classList.remove('err'));
+    const bad = [];
+    const cards = [];
+    ed.rows.forEach((r, i) => {
+      const t = r.term.trim(), d = r.def.trim();
+      if (!t && !d) return;
+      if (!t || !d) { bad.push(i); return; }
+      cards.push({ id: r.id, term: t, def: d });
+    });
+    if (bad.length) {
+      bad.forEach(i => { const li = list.querySelector(`[data-i="${i}"]`); if (li) li.classList.add('err'); });
+      errEl.textContent = bad.length === 1 ? `Card ${bad[0] + 1} is missing a side. Fill it in or delete it.` : `${bad.length} cards are missing a side. Fill them in or delete them.`;
+      const first = list.querySelector('.ed-row.err');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (cards.length < 2) { errEl.textContent = 'Add at least two cards to make a set.'; return; }
+    const set = existing ? plain(existing) : normalizeSet({ cards: [] });
+    set.title = ed.title.trim() || 'Untitled set';
+    set.description = ed.desc.trim();
+    set.cards = cards;
+    const keep = new Set(cards.map(c => c.id));
+    Object.keys(set.progress).forEach(id => { if (!keep.has(id)) delete set.progress[id]; });
+    if (byteSize(set) > MAX_BYTES) { errEl.textContent = 'This set is too large to save. Split it into two smaller sets.'; return; }
+    ed.dirty = false;
+    persist(set);
+    go({ view: 'set', setId: set.id });
+    toast(existing ? 'Saved your changes.' : `Created “${set.title}”.`);
+  });
+  if (importOpen) setTimeout(() => impText.focus(), 50);
+}
+
+/* ---------- shared mode header ---------- */
+function modeHeader(set, title, right = '') {
+  return `<div class="mode-head">
+    <div class="left"><button class="back" type="button" data-back>${ICON.left} ${esc(set.title)}</button><h1>${title}</h1></div>
+    <div class="right">${right}</div>
+  </div>`;
+}
+function resultBlock({ title, big, sub, isNew, extra = '', again = 'Play again' }) {
+  return `<div class="result center">
+    <h2>${title}</h2>
+    ${isNew ? '<span class="badge-new">New personal best</span>' : ''}
+    <div class="bignum">${big}</div>
+    ${sub ? `<p class="muted">${sub}</p>` : ''}
+    ${extra}
+    <div class="row" style="justify-content:center"><button class="btn primary" type="button" id="again">${again}</button><button class="btn" type="button" data-back>Back to set</button></div>
+  </div>`;
+}
+
+/* ---------- view: flashcards ---------- */
+const canSpeak = (() => { try { return 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined'; } catch (e) { return false; } })();
+function speak(text) { try { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } catch (e) { /* ignore */ } }
+function viewFlashcards(set) {
+  const base = studyCards(set);
+  const S = { order: base.map(c => c.id), i: 0, flipped: false, know: new Set(), learn: new Set(), shuffled: false, done: false };
+  const byId = id => set.cards.find(c => c.id === id);
+  app.innerHTML = `<div class="wrap page">${modeHeader(set, 'Flashcards')}<div class="stack" id="fc-root"></div></div>`;
+  const root = $('#fc-root');
+  const face = (c, side, which) => `<div class="fc-face indexcard ${which}"><span class="fc-label">${sideLabel(side)}</span><div class="fc-text ${side} ${sizeClass(c[side])}"><span>${esc(c[side])}</span></div></div>`;
+
+  function draw() {
+    if (S.done) return drawDone();
+    const c = byId(S.order[S.i]);
+    const front = prefs.fcFront === 'def' ? 'def' : 'term';
+    const starred = !!prog(set, c.id).s;
+    root.innerHTML = `
+      <div class="fc-bar">
+        <span class="mono">${S.i + 1} / ${S.order.length}</span>
+        <div class="row tight">
+          <button class="btn sm ${S.shuffled ? 'on' : ''}" type="button" id="fc-shuffle" aria-pressed="${S.shuffled}">Shuffle</button>
+          <button class="btn sm" type="button" id="fc-side">${front === 'term' ? 'Definition' : 'Term'} first</button>
+          ${canSpeak ? `<button class="btn sm icon" type="button" id="fc-speak" aria-label="Read the visible side aloud">${ICON.speak}</button>` : ''}
+          <button class="btn sm icon star ${starred ? 'on' : ''}" type="button" id="fc-star" aria-pressed="${starred}" aria-label="Star this card">${starred ? ICON.starOn : ICON.star}</button>
+        </div>
+      </div>
+      <div class="fc-progress"><span style="width:${(S.i / S.order.length) * 100}%"></span></div>
+      <div class="fc-stage">
+        <div class="flashcard" id="fc" role="button" tabindex="0" data-keyok aria-label="Flashcard ${S.i + 1}. Press to flip.">
+          <div class="fc-inner">${face(c, front, 'front')}${face(c, other(front), 'back')}</div>
+        </div>
+      </div>
+      <div class="fc-actions">
+        <button class="btn icon" type="button" id="fc-prev" aria-label="Previous card" ${S.i === 0 ? 'disabled' : ''}>${ICON.left}</button>
+        <button class="btn learnbtn" type="button" id="fc-learn">Still learning <kbd>1</kbd></button>
+        <button class="btn knowbtn" type="button" id="fc-know">Got it <kbd>2</kbd></button>
+        <button class="btn icon" type="button" id="fc-next" aria-label="Next card">${ICON.right}</button>
+      </div>
+      <p class="hint">Click the card or press Space to flip · ← → to move</p>`;
+    S.flipped = false;
+    const card = $('#fc');
+    card.addEventListener('click', flip);
+    bind('#fc-prev', () => move(-1));
+    bind('#fc-next', () => move(1));
+    bind('#fc-learn', () => mark('learn'));
+    bind('#fc-know', () => mark('know'));
+    bind('#fc-shuffle', toggleShuffle);
+    bind('#fc-side', () => { prefs.fcFront = front === 'term' ? 'def' : 'term'; savePrefs(); draw(); });
+    bind('#fc-speak', () => speak(S.flipped ? c[other(front)] : c[front]));
+    bind('#fc-star', e => {
+      const on = toggleStar(set, c.id);
+      const b = e.currentTarget;
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.innerHTML = on ? ICON.starOn : ICON.star;
+    });
+  }
+  function flip() {
+    S.flipped = !S.flipped;
+    const card = $('#fc');
+    if (card) card.classList.toggle('flipped', S.flipped);
+  }
+  function move(d) {
+    const ni = S.i + d;
+    if (ni < 0) return;
+    if (ni >= S.order.length) { S.done = true; draw(); return; }
+    S.i = ni; draw();
+  }
+  function mark(kind) {
+    const id = S.order[S.i];
+    S.know.delete(id); S.learn.delete(id);
+    S[kind].add(id);
+    move(1);
+  }
+  function toggleShuffle() {
+    S.shuffled = !S.shuffled;
+    const head = S.order.slice(0, S.i + 1), rest = S.order.slice(S.i + 1);
+    const idx = new Map(base.map((c, i) => [c.id, i]));
+    S.order = head.concat(S.shuffled ? shuffle(rest) : rest.sort((a, b) => idx.get(a) - idx.get(b)));
+    draw();
+  }
+  function restart(ids) {
+    S.order = S.shuffled ? shuffle(ids) : ids;
+    S.i = 0; S.done = false; S.know = new Set(); S.learn = new Set();
+    draw();
+  }
+  function drawDone() {
+    const k = S.know.size, l = S.learn.size, total = S.order.length;
+    const learnIds = S.order.filter(id => S.learn.has(id));
+    root.innerHTML = `<div class="result center">
+      <h2>${k === total ? 'You knew every card.' : 'Deck finished'}</h2>
+      <div class="bignum">${k} / ${total}</div>
+      <p class="muted">${k} got it · ${l} still learning${total - k - l ? ` · ${total - k - l} skipped` : ''}</p>
+      <div class="row" style="justify-content:center">
+        ${learnIds.length ? `<button class="btn primary" type="button" id="fc-review">Review the ${plural(learnIds.length, 'card')} still learning</button>` : ''}
+        <button class="btn ${learnIds.length ? '' : 'primary'}" type="button" id="fc-restart">Start over</button>
+        <button class="btn" type="button" data-back>Back to set</button>
+      </div></div>`;
+    bind('#fc-review', () => restart(learnIds));
+    bind('#fc-restart', () => restart(base.map(c => c.id)));
+  }
+  keyHandler = e => {
+    if (isTyping(e.target) || S.done) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
+    else if (e.key === '1') mark('learn');
+    else if (e.key === '2') mark('know');
+  };
+  draw();
+}
+
+/* ---------- view: learn ---------- */
+function viewLearn(set) {
+  const S = { round: [], qi: 0, results: [], cur: null, phase: 'q' };
+  app.innerHTML = `<div class="wrap narrow page">
+    ${modeHeader(set, 'Learn', `<label class="toggle" for="ans-with">Answer with <select id="ans-with"><option value="term">Term</option><option value="def">Definition</option></select></label>`)}
+    <div class="learn-top"><div class="mbar big" id="ln-bar"></div><span class="mono muted" id="ln-count"></span></div>
+    <div class="stack" id="ln-root"></div>
+  </div>`;
+  const root = $('#ln-root');
+  const sel = $('#ans-with');
+  sel.value = prefs.answerWith;
+  sel.addEventListener('change', () => { prefs.answerWith = sel.value; savePrefs(); if (S.phase === 'q' && S.cur) ask(); });
+  const pool = () => studyCards(set).filter(c => (prog(set, c.id).l || 0) < 2);
+  function drawTop() {
+    const cards = studyCards(set), c = counts(set, cards);
+    const pct = v => (c.total ? (v / c.total) * 100 : 0).toFixed(1);
+    $('#ln-bar').innerHTML = `<span class="m-done" style="width:${pct(c.m)}%"></span><span class="m-learn" style="width:${pct(c.l)}%"></span>`;
+    $('#ln-bar').setAttribute('aria-label', `${c.m} of ${c.total} mastered`);
+    $('#ln-count').textContent = `${c.m} / ${c.total} mastered`;
+  }
+  function startRound() {
+    const p = shuffle(pool());
+    drawTop();
+    if (!p.length) return drawDone();
+    S.round = p.slice(0, 7); S.qi = 0; S.results = [];
+    ask();
+  }
+  function ask() {
+    const c = S.round[S.qi];
+    const lvl = prog(set, c.id).l || 0;
+    const { p, a } = sides(prefs.answerWith);
+    const opts = mcOptions(c, a, set.cards);
+    const type = lvl === 0 && opts.length >= 2 ? 'mc' : 'write';
+    S.cur = { c, lvl, type, opts, p, a, answered: false };
+    S.phase = 'q';
+    root.innerHTML = `
+      <div class="qcard indexcard">
+        <span class="qlabel">${sideLabel(p)} · ${type === 'mc' ? 'pick one' : 'type it'}</span>
+        <div class="qprompt ${p} ${sizeClass(c[p])}">${esc(c[p])}</div>
+      </div>
+      ${type === 'mc' ? `
+        <p class="qhint">Choose the matching ${sideLabel(a).toLowerCase()}</p>
+        <div class="choices">${opts.map((o, i) => `<button class="choice" type="button" data-i="${i}"><span class="k">${i + 1}</span><span class="ct">${esc(o)}</span></button>`).join('')}</div>
+        <div><button class="link" type="button" id="dk">Don’t know?</button></div>` : `
+        <form class="wform" id="wform" autocomplete="off">
+          <label class="qhint" for="winput">Type the ${sideLabel(a).toLowerCase()}</label>
+          <div class="row"><input id="winput" type="text" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn primary" type="submit">Answer</button></div>
+          <div><button class="link" type="button" id="dk">Don’t know</button></div>
+        </form>`}
+      <div id="fb"></div>`;
+    if (type === 'mc') {
+      root.querySelectorAll('.choice').forEach(b => b.addEventListener('click', () => pickMC(+b.dataset.i)));
+    } else {
+      const inp = $('#winput');
+      inp.focus();
+      $('#wform').addEventListener('submit', e => {
+        e.preventDefault();
+        if (S.cur.answered) return;
+        if (!inp.value.trim()) { inp.focus(); return; }
+        const g = grade(inp.value, c[a]);
+        result(g.ok, inp.value, g.note);
+      });
+    }
+    bind('#dk', () => { if (!S.cur.answered) result(false, '', null); });
+  }
+  function pickMC(i) {
+    if (S.cur.answered) return;
+    const { c, a, opts } = S.cur;
+    const ok = key(opts[i]) === key(c[a]);
+    root.querySelectorAll('.choice').forEach((b, j) => {
+      b.disabled = true;
+      if (key(opts[j]) === key(c[a])) b.classList.add('correct');
+      else if (j === i) b.classList.add('wrong');
+    });
+    result(ok, opts[i], null);
+  }
+  const PRAISE = ['Nice!', 'Correct!', 'You got it.', 'Exactly right.', 'Spot on.', 'Yes!'];
+  function result(ok, given, note) {
+    const cur = S.cur;
+    cur.answered = true;
+    S.phase = 'fb';
+    setLevel(set, cur.c.id, ok ? Math.min(2, cur.lvl + 1) : 0);
+    persist(set, 800);
+    S.results.push({ c: cur.c, ok });
+    drawTop();
+    const inp = $('#winput'); if (inp) inp.disabled = true;
+    root.querySelectorAll('#wform button, #dk').forEach(b => { b.disabled = true; });
+    const fb = $('#fb');
+    if (ok) {
+      const lvlMsg = cur.lvl + 1 >= 2 ? 'Mastered.' : 'Next time you’ll type it.';
+      fb.innerHTML = `<div class="fb good"><strong>${PRAISE[Math.floor(Math.random() * PRAISE.length)]}</strong>
+        ${note ? `<span class="ans">${esc(note)}</span>` : ''}<span class="muted">${lvlMsg}</span>
+        <div><button class="btn primary" type="button" id="cont">Continue <kbd>Enter</kbd></button></div></div>`;
+      if (!note) later(() => { if (S.phase === 'fb' && S.cur === cur) next(); }, cur.type === 'mc' ? 900 : 1200);
+    } else {
+      fb.innerHTML = `<div class="fb bad"><strong>${given ? 'Not quite.' : 'Here’s the answer.'}</strong>
+        ${given && cur.type === 'write' ? `<span class="ans">You wrote: <s>${esc(given)}</s></span>` : ''}
+        <span class="ans">Correct answer: <b>${esc(cur.c[cur.a])}</b></span>
+        <div class="row"><button class="btn primary" type="button" id="cont">Continue <kbd>Enter</kbd></button>
+        ${given && cur.type === 'write' ? '<button class="btn" type="button" id="override">I was right</button>' : ''}</div></div>`;
+      bind('#override', () => {
+        if (S.phase !== 'fb' || S.cur !== cur) return;
+        setLevel(set, cur.c.id, Math.min(2, cur.lvl + 1));
+        persist(set, 800);
+        S.results[S.results.length - 1].ok = true;
+        next();
+      });
+    }
+    bind('#cont', next);
+    const cont = $('#cont'); if (cont) cont.focus();
+  }
+  function next() {
+    if (S.phase !== 'fb') return;
+    S.phase = 'moving';
+    S.qi++;
+    if (S.qi >= S.round.length) drawSummary(); else ask();
+  }
+  function drawSummary() {
+    S.phase = 'summary';
+    drawTop();
+    const ok = S.results.filter(r => r.ok).length;
+    const { a } = sides(prefs.answerWith);
+    root.innerHTML = `<div class="result center">
+      <h2>Round complete</h2>
+      <div class="bignum">${ok} / ${S.results.length}</div>
+      <p class="muted">right this round</p>
+      <ul class="round-list">${S.results.map(r => `<li><span class="${r.ok ? 'ok' : 'no'}">${r.ok ? '✓' : '✗'}</span><span>${esc(r.c[a])}</span></li>`).join('')}</ul>
+      <div class="row" style="justify-content:center"><button class="btn primary" type="button" id="next-round">Next round <kbd>Enter</kbd></button><button class="btn" type="button" data-back>Back to set</button></div>
+    </div>`;
+    bind('#next-round', startRound);
+    $('#next-round').focus();
+  }
+  function drawDone() {
+    S.phase = 'done';
+    const starOnly = prefs.starredOnly[set.id] && set.cards.some(c => prog(set, c.id).s);
+    root.innerHTML = `<div class="result center">
+      <h2>You’ve mastered every ${starOnly ? 'starred ' : ''}term.</h2>
+      <p class="muted">Check it holds up with a practice test, or reset and learn the set again.</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn primary" type="button" id="to-test">Take a practice test</button>
+        <button class="btn" type="button" id="relearn">Reset and learn again</button>
+        <button class="btn" type="button" data-back>Back to set</button>
+      </div></div>`;
+    bind('#to-test', () => go({ view: 'test', setId: set.id }));
+    bind('#relearn', () => {
+      studyCards(set).forEach(c => setLevel(set, c.id, 0));
+      persist(set);
+      startRound();
+    });
+  }
+  keyHandler = e => {
+    if (S.phase === 'q' && S.cur && S.cur.type === 'mc' && !isTyping(e.target)) {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= S.cur.opts.length) { e.preventDefault(); pickMC(n - 1); }
+    } else if (e.key === 'Enter') {
+      if (S.phase === 'fb') { e.preventDefault(); next(); }
+      else if (S.phase === 'summary') { e.preventDefault(); startRound(); }
+    }
+  };
+  startRound();
+}
+
+/* ---------- view: practice test ---------- */
+function viewTest(set) {
+  const cards = studyCards(set);
+  const cfg = { n: Math.min(cards.length, 20), types: { mc: true, tf: true, write: true }, ans: prefs.answerWith };
+  let qs = [];
+  app.innerHTML = `<div class="wrap narrow page">${modeHeader(set, 'Practice test')}<div id="t-root" class="stack"></div></div>`;
+  const root = $('#t-root');
+  const TYPE_LABEL = { mc: 'Multiple choice', tf: 'True or false', write: 'Written' };
+
+  function drawConfig() {
+    root.innerHTML = `<div class="panel cfg">
+      <h2>Set up your test</h2>
+      <label class="field" for="t-n">Number of questions
+        <span class="numrow"><input id="t-n" type="number" min="1" max="${cards.length}" value="${cfg.n}"><span class="muted" style="font-weight:400">of ${cards.length} available</span></span>
+      </label>
+      <fieldset><legend>Question types</legend><div class="checks">
+        ${Object.keys(TYPE_LABEL).map(t => `<label for="t-${t}"><input type="checkbox" id="t-${t}" ${cfg.types[t] ? 'checked' : ''}> ${TYPE_LABEL[t]}</label>`).join('')}
+      </div></fieldset>
+      <label class="toggle" for="t-ans">Answer with <select id="t-ans"><option value="term">Term</option><option value="def">Definition</option></select></label>
+      <p class="err" id="t-err" role="alert"></p>
+      <div><button class="btn primary big" type="button" id="t-start">Start test</button></div>
+    </div>`;
+    $('#t-ans').value = cfg.ans;
+    bind('#t-start', () => {
+      const n = Math.round(Number($('#t-n').value));
+      Object.keys(TYPE_LABEL).forEach(t => { cfg.types[t] = $('#t-' + t).checked; });
+      cfg.ans = $('#t-ans').value;
+      const types = Object.keys(TYPE_LABEL).filter(t => cfg.types[t]);
+      if (!types.length) { $('#t-err').textContent = 'Pick at least one question type.'; return; }
+      if (!n || n < 1 || n > cards.length) { $('#t-err').textContent = `Choose between 1 and ${cards.length} questions.`; return; }
+      cfg.n = n;
+      prefs.answerWith = cfg.ans; savePrefs();
+      build(types);
+    });
+  }
+  function build(types) {
+    const { p, a } = sides(cfg.ans);
+    const picked = shuffle(cards).slice(0, cfg.n);
+    qs = shuffle(picked.map((c, i) => {
+      let type = types[i % types.length];
+      if (type === 'mc') {
+        const opts = mcOptions(c, a, set.cards);
+        if (opts.length >= 2) return { type, c, p, a, opts, user: null };
+        type = 'write';
+      }
+      if (type === 'tf') {
+        const dist = shuffle(set.cards).find(d => key(d[a]) !== key(c[a]));
+        const truth = !dist || Math.random() < 0.5;
+        return { type, c, p, a, shown: truth ? c[a] : dist[a], truth, user: null };
+      }
+      return { type: 'write', c, p, a, user: '' };
+    }));
+    drawTest();
+  }
+  function qBody(q, i, graded) {
+    const head = `<div class="tq-head"><span>${i + 1} of ${qs.length}</span><span>${TYPE_LABEL[q.type]}</span></div>
+      <div class="tq-prompt ${q.p}">${esc(q.c[q.p])}</div>`;
+    if (q.type === 'mc') {
+      return head + `<div class="choices">${q.opts.map((o, j) => {
+        let cls = q.user === j ? 'picked' : '';
+        if (graded) cls = key(o) === key(q.c[q.a]) ? 'correct' : (q.user === j ? 'wrong' : '');
+        return `<button class="choice ${cls}" type="button" data-q="${i}" data-o="${j}" ${graded ? 'disabled' : ''} aria-pressed="${q.user === j}"><span class="k">${String.fromCharCode(65 + j)}</span><span class="ct">${esc(o)}</span></button>`;
+      }).join('')}</div>`;
+    }
+    if (q.type === 'tf') {
+      const btn = (v, label) => {
+        let cls = q.user === v ? 'picked' : '';
+        if (graded) cls = q.truth === v ? 'correct' : (q.user === v ? 'wrong' : '');
+        return `<button class="choice ${cls}" type="button" data-q="${i}" data-tf="${v ? 1 : 0}" ${graded ? 'disabled' : ''} aria-pressed="${q.user === v}"><span class="ct">${label}</span></button>`;
+      };
+      return head + `<div class="tq-pair"><span class="qlabel" style="height:auto;margin-bottom:6px">Is this the ${sideLabel(q.a).toLowerCase()}?</span>${esc(q.shown)}</div>
+        <div class="choices">${btn(true, 'True')}${btn(false, 'False')}</div>`;
+    }
+    return head + `<label class="sr" for="tw-${i}">Your answer to question ${i + 1}</label><input type="text" id="tw-${i}" data-q="${i}" class="tq-input" placeholder="Type the ${sideLabel(q.a).toLowerCase()}" value="${esc(q.user)}" ${graded ? 'disabled' : ''} autocomplete="off" autocapitalize="off" spellcheck="false">`;
+  }
+  function drawTest() {
+    root.innerHTML = `<ol class="tq-list">${qs.map((q, i) => `<li class="tq" id="tq-${i}">${qBody(q, i, false)}</li>`).join('')}</ol>
+      <div class="panel" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <span class="muted" id="t-left"></span>
+        <button class="btn primary big" type="button" id="t-submit">Submit test</button>
+      </div>`;
+    const list = root.querySelector('.tq-list');
+    const left = () => { const n = qs.filter(q => q.type === 'write' ? !q.user.trim() : q.user === null).length; $('#t-left').textContent = n ? `${plural(n, 'question')} unanswered` : 'All questions answered'; };
+    list.addEventListener('click', e => {
+      const b = e.target.closest('[data-q]'); if (!b || b.tagName === 'INPUT') return;
+      const i = +b.dataset.q, q = qs[i];
+      if (b.dataset.o != null) q.user = +b.dataset.o;
+      else if (b.dataset.tf != null) q.user = b.dataset.tf === '1';
+      $('#tq-' + i).innerHTML = qBody(q, i, false);
+      left();
+    });
+    list.addEventListener('input', e => {
+      const inp = e.target.closest('input[data-q]'); if (!inp) return;
+      qs[+inp.dataset.q].user = inp.value;
+      left();
+    });
+    list.addEventListener('keydown', e => {
+      const inp = e.target.closest('input[data-q]');
+      if (inp && e.key === 'Enter') { e.preventDefault(); const nx = list.querySelector(`#tw-${+inp.dataset.q + 1}`) || $('#tq-' + (+inp.dataset.q + 1)); if (nx) (nx.matches('input') ? nx : nx.querySelector('button, input')).focus(); }
+    });
+    left();
+    bind('#t-submit', submit);
+  }
+  function submit() {
+    let right = 0;
+    qs.forEach(q => {
+      if (q.type === 'mc') q.ok = q.user !== null && key(q.opts[q.user]) === key(q.c[q.a]);
+      else if (q.type === 'tf') q.ok = q.user !== null && q.user === q.truth;
+      else { const g = grade(q.user, q.c[q.a]); q.ok = g.ok; q.note = g.note; }
+      if (q.ok) right++;
+    });
+    const pctScore = Math.round((right / qs.length) * 100);
+    const msg = pctScore === 100 ? 'Perfect score.' : pctScore >= 80 ? 'Strong result.' : pctScore >= 50 ? 'Getting there.' : 'Keep practicing. Learn mode helps with the ones you missed.';
+    root.innerHTML = `<div class="result center">
+        <h2>${msg}</h2>
+        <div class="bignum">${pctScore}%</div>
+        <p class="muted">${right} of ${qs.length} correct</p>
+        <div class="row" style="justify-content:center"><button class="btn primary" type="button" id="t-retake">New test, same settings</button><button class="btn" type="button" id="t-settings">Change settings</button><button class="btn" type="button" data-back>Back to set</button></div>
+      </div>
+      <ol class="tq-list">${qs.map((q, i) => `<li class="tq ${q.ok ? 'is-ok' : 'is-no'}">${qBody(q, i, true)}
+        <p class="tq-verdict ${q.ok ? 'ok' : 'no'}">${q.ok ? 'Correct' : (q.type === 'write' ? (q.user.trim() ? 'Incorrect' : 'Not answered') : (q.user === null ? 'Not answered' : 'Incorrect'))}</p>
+        ${q.note ? `<p class="muted">${esc(q.note)}</p>` : ''}
+        ${!q.ok && q.type !== 'mc' ? `<p>Correct answer: <b>${esc(q.type === 'tf' ? (q.truth ? 'True' : 'False') + (q.truth ? '' : ' (it’s “' + q.c[q.a] + '”)') : q.c[q.a])}</b></p>` : ''}
+      </li>`).join('')}</ol>`;
+    bind('#t-retake', () => build(Object.keys(TYPE_LABEL).filter(t => cfg.types[t])));
+    bind('#t-settings', drawConfig);
+    window.scrollTo(0, 0);
+  }
+  drawConfig();
+}
+
+/* ---------- view: match ---------- */
+function viewMatch(set) {
+  const cards = studyCards(set);
+  const pairs = matchPairs(cards);
+  app.innerHTML = `<div class="wrap page">${modeHeader(set, 'Match', `<div class="hud"><span class="penalty" id="m-pen"></span><div class="stat"><b id="m-time">0.0s</b><span>Time</span></div></div>`)}<div id="m-root" class="stack"></div></div>`;
+  const root = $('#m-root');
+  let stopTimer = null;
+  function intro() {
+    const b = bestOf(set, 'match', String(pairs));
+    root.innerHTML = `<div class="result center">
+      <h2>Match ${pairs} pairs</h2>
+      <p class="howto">Click a term, then its definition. Matched pairs disappear. A wrong pair adds one second to your time.</p>
+      ${b != null ? `<p class="mono muted">Your best: ${fmtTime(b)}</p>` : ''}
+      <button class="btn primary big" type="button" id="again">Start game</button></div>`;
+    bind('#again', play);
+  }
+  function play() {
+    const pick = uniqueCards(shuffle(cards)).slice(0, pairs);
+    const tiles = shuffle(pick.flatMap(c => [{ id: c.id, side: 'term', text: c.term }, { id: c.id, side: 'def', text: c.def }]));
+    const S = { sel: null, left: pick.length, penalty: 0, t0: performance.now() };
+    root.innerHTML = `<div class="mgrid">${tiles.map((t, i) => `<button class="mtile ${t.side}" type="button" data-i="${i}">${esc(t.text)}</button>`).join('')}</div>`;
+    const timeEl = $('#m-time'), penEl = $('#m-pen');
+    penEl.textContent = '';
+    stopTimer = loop(now => { timeEl.textContent = fmtTime(now - S.t0 + S.penalty); });
+    const tileEl = i => root.querySelector(`[data-i="${i}"]`);
+    root.querySelector('.mgrid').addEventListener('click', e => {
+      const b = e.target.closest('.mtile');
+      if (!b || b.disabled) return;
+      const i = +b.dataset.i;
+      if (S.sel === null) { S.sel = i; b.classList.add('sel'); return; }
+      if (S.sel === i) { b.classList.remove('sel'); S.sel = null; return; }
+      const a = tiles[S.sel], t = tiles[i], ab = tileEl(S.sel);
+      ab.classList.remove('sel');
+      if (a.side === t.side) { S.sel = i; b.classList.add('sel'); return; }
+      S.sel = null;
+      if (a.id === t.id) {
+        [ab, b].forEach(x => { x.disabled = true; x.classList.add('gone'); });
+        if (--S.left === 0) finish(performance.now() - S.t0 + S.penalty);
+      } else {
+        S.penalty += 1000;
+        penEl.textContent = '+' + S.penalty / 1000 + 's';
+        [ab, b].forEach(x => { x.classList.remove('bad'); void x.offsetWidth; x.classList.add('bad'); });
+      }
+    });
+  }
+  function finish(ms) {
+    if (stopTimer) stopTimer();
+    ms = Math.round(ms);
+    $('#m-time').textContent = fmtTime(ms);
+    const r = recordBest(set, 'match', String(pairs), ms, true);
+    later(() => {
+      root.innerHTML = resultBlock({ title: 'All matched!', big: fmtTime(ms), isNew: r.isNew && r.hadPrev, sub: r.isNew ? (r.hadPrev ? 'Fastest yet.' : 'Your first time on the board.') : `Your best is ${fmtTime(r.best)}.` });
+      bind('#again', play);
+    }, 450);
+  }
+  intro();
+}
+
+/* ---------- view: memory flip ---------- */
+function viewMemory(set) {
+  const cards = studyCards(set);
+  const pairs = memoryPairs(cards);
+  app.innerHTML = `<div class="wrap page">${modeHeader(set, 'Memory Flip', `<div class="hud"><div class="stat"><b id="mm-moves">0</b><span>Moves</span></div><div class="stat"><b id="mm-time">0.0s</b><span>Time</span></div></div>`)}<div id="mm-root" class="stack"></div></div>`;
+  const root = $('#mm-root');
+  function intro() {
+    const b = bestOf(set, 'memory', String(pairs));
+    root.innerHTML = `<div class="result center">
+      <h2>${pairs} pairs, face down</h2>
+      <p class="howto">Flip two cards per move. If a term and its definition turn up together, they stay face up. Clear the board in as few moves as you can.</p>
+      ${b != null ? `<p class="mono muted">Your best: ${plural(b, 'move')}</p>` : ''}
+      <button class="btn primary big" type="button" id="again">Start game</button></div>`;
+    bind('#again', play);
+  }
+  function play() {
+    const pick = uniqueCards(shuffle(cards)).slice(0, pairs);
+    const deck = shuffle(pick.flatMap(c => [{ id: c.id, side: 'term', text: c.term }, { id: c.id, side: 'def', text: c.def }]));
+    const cols = { 4: 2, 6: 3, 8: 4, 12: 4, 16: 4 }[deck.length] || 4;
+    const S = { up: [], moves: 0, found: 0, lock: false, t0: null, over: false };
+    root.innerHTML = `<div class="memgrid" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr)); max-width:${cols * 170}px; margin-inline:auto; width:100%">
+      ${deck.map((d, i) => `<button class="mcard" type="button" data-i="${i}" aria-label="Card ${i + 1}, face down"><span class="mc-inner"><span class="mc-back"></span><span class="mc-face"><span class="mc-label">${sideLabel(d.side)}</span><span class="mc-text ${d.side}">${esc(d.text)}</span></span></span></button>`).join('')}
+    </div>`;
+    const movesEl = $('#mm-moves'), timeEl = $('#mm-time');
+    movesEl.textContent = '0'; timeEl.textContent = '0.0s';
+    const stop = loop(now => { if (S.t0 !== null && !S.over) timeEl.textContent = fmtTime(now - S.t0); });
+    const el = i => root.querySelector(`[data-i="${i}"]`);
+    const setUp = (i, up) => { const b = el(i); b.classList.toggle('up', up); b.setAttribute('aria-label', up ? `${sideLabel(deck[i].side)}: ${deck[i].text}` : `Card ${i + 1}, face down`); };
+    root.querySelector('.memgrid').addEventListener('click', e => {
+      const b = e.target.closest('.mcard'); if (!b) return;
+      const i = +b.dataset.i;
+      if (S.lock || S.over || b.classList.contains('done') || S.up.includes(i)) return;
+      if (S.t0 === null) S.t0 = performance.now();
+      setUp(i, true);
+      S.up.push(i);
+      if (S.up.length < 2) return;
+      S.moves++;
+      movesEl.textContent = S.moves;
+      const [x, y] = S.up;
+      if (deck[x].id === deck[y].id) {
+        [x, y].forEach(k => { el(k).classList.add('done'); el(k).classList.remove('up'); });
+        S.up = [];
+        if (++S.found === pairs) {
+          S.over = true; stop();
+          const ms = performance.now() - S.t0;
+          timeEl.textContent = fmtTime(ms);
+          const r = recordBest(set, 'memory', String(pairs), S.moves, true);
+          later(() => {
+            root.innerHTML = resultBlock({ title: 'Board cleared!', big: plural(S.moves, 'move'), isNew: r.isNew && r.hadPrev, sub: `${fmtTime(ms)} · ${pairs} pairs · a perfect game is ${pairs} moves.${r.isNew ? '' : ` Your best is ${plural(r.best, 'move')}.`}` });
+            bind('#again', play);
+          }, 700);
+        }
+      } else {
+        S.lock = true;
+        later(() => { setUp(x, false); setUp(y, false); S.up = []; S.lock = false; }, 950);
+      }
+    });
+  }
+  intro();
+}
+
+/* ---------- view: bubble pop ---------- */
+function viewBubble(set) {
+  const cards = uniqueCards(studyCards(set));
+  const gs = gameSides(cards);
+  app.innerHTML = `<div class="wrap page">${modeHeader(set, 'Bubble Pop', `<div class="hud"><div class="hearts" id="b-lives" aria-label="Lives"></div><div class="stat"><b id="b-streak">0</b><span>Streak</span></div><div class="stat"><b id="b-score">0</b><span>Score</span></div></div>`)}<div id="b-root" class="stack"></div></div>`;
+  const root = $('#b-root');
+  let S = null;
+  const hud = () => {
+    $('#b-lives').innerHTML = [0, 1, 2].map(i => `<span class="${i < S.lives ? '' : 'lost'}">${ICON.heart}</span>`).join('');
+    $('#b-lives').setAttribute('aria-label', `${S.lives} lives left`);
+    $('#b-score').textContent = S.score;
+    $('#b-streak').textContent = S.streak;
+  };
+  function intro() {
+    const b = bestOf(set, 'bubble', 'score');
+    root.innerHTML = `<div class="result center">
+      <h2>Pop the right answer</h2>
+      <p class="howto">A ${sideLabel(gs.clue).toLowerCase()} appears at the top. Bubbles carrying ${gs.show === 'term' ? 'terms' : 'definitions'} rise from below. Pop the one that matches before it floats away. Wrong pops and missed answers cost a life. Keys 1–4 pop bubbles too.</p>
+      ${b != null ? `<p class="mono muted">Your best: ${b} pts</p>` : ''}
+      <button class="btn primary big" type="button" id="again">Start game</button></div>`;
+    bind('#again', play);
+  }
+  function play() {
+    S = { lives: 3, score: 0, streak: 0, dur: 8.5, wave: null, last: null, over: false };
+    root.innerHTML = `<div class="b-prompt indexcard"><span class="qlabel">${sideLabel(gs.clue)}</span><div class="qprompt ${gs.clue}" id="b-clue"></div><div class="b-reveal" id="b-reveal" aria-live="polite"></div></div><div class="arena" id="arena"></div>`;
+    hud();
+    nextWave();
+    loop((now, dt) => step(dt));
+  }
+  function nextWave() {
+    if (S.over) return;
+    const arena = $('#arena');
+    arena.innerHTML = '';
+    $('#b-reveal').textContent = '';
+    let target = cards[Math.floor(Math.random() * cards.length)];
+    if (cards.length > 1) while (target.id === S.last) target = cards[Math.floor(Math.random() * cards.length)];
+    S.last = target.id;
+    const opts = shuffle([target, ...shuffle(cards.filter(c => c.id !== target.id)).slice(0, 3)]);
+    $('#b-clue').textContent = target[gs.clue];
+    const W = arena.clientWidth, H = arena.clientHeight;
+    const laneW = W / opts.length;
+    const bw = Math.min(laneW - 10, 230);
+    const bubbles = opts.map((c, i) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'bubble';
+      el.innerHTML = `<span class="bnum">${i + 1}</span><span>${esc(c[gs.show])}</span>`;
+      el.style.width = bw + 'px';
+      el.style.left = (i * laneW + (laneW - bw) / 2) + 'px';
+      arena.appendChild(el);
+      const h = el.offsetHeight;
+      el.style.transform = `translate(0px, ${h + 16}px)`;
+      const b = { el, c, h, y: -h - 16, delay: i * 0.25 + Math.random() * 0.9, phase: Math.random() * 6.28, alive: true };
+      el.addEventListener('click', () => hit(b));
+      return b;
+    });
+    S.wave = { target, bubbles, state: 'live', t: 0, H, speed: (H + 60) / S.dur };
+  }
+  function step(dt) {
+    if (S.over) return false;
+    const w = S.wave;
+    if (!w || w.state !== 'live') return;
+    w.t += dt;
+    for (const b of w.bubbles) {
+      if (!b.alive && !b.dud) continue;
+      if (w.t < b.delay) continue;
+      b.y += w.speed * dt;
+      const x = Math.sin(w.t * 1.7 + b.phase) * 7;
+      b.el.style.transform = `translate(${x.toFixed(1)}px, ${(-b.y).toFixed(1)}px)`;
+      if (b.y > w.H) {
+        b.alive = false; b.dud = false;
+        if (b.c.id === w.target.id) { miss(); return; }
+      }
+    }
+  }
+  function hit(b) {
+    const w = S.wave;
+    if (!w || w.state !== 'live' || !b.alive || S.over) return;
+    if (b.c.id === w.target.id) {
+      b.alive = false;
+      b.el.classList.add('pop');
+      S.streak++;
+      S.score += 10 + Math.min(S.streak - 1, 10) * 2;
+      S.dur = Math.max(3.6, S.dur - 0.25);
+      w.state = 'done';
+      hud();
+      later(nextWave, 450);
+    } else {
+      b.alive = false; b.dud = true;
+      b.el.classList.add('dud');
+      b.el.disabled = true;
+      S.streak = 0;
+      loseLife(w);
+    }
+  }
+  function miss() {
+    const w = S.wave;
+    w.state = 'done';
+    S.streak = 0;
+    $('#b-reveal').textContent = 'It was: ' + w.target[gs.show];
+    if (!loseLife(w)) later(nextWave, 1500);
+  }
+  function loseLife(w) {
+    S.lives--;
+    hud();
+    if (S.lives > 0) return false;
+    w.state = 'done';
+    S.over = true;
+    w.bubbles.forEach(b => { if (b.c.id === w.target.id) b.el.classList.add('reveal'); });
+    if (!$('#b-reveal').textContent) $('#b-reveal').textContent = 'It was: ' + w.target[gs.show];
+    later(() => {
+      const r = recordBest(set, 'bubble', 'score', S.score, false);
+      root.innerHTML = resultBlock({ title: 'Out of lives', big: S.score + ' pts', isNew: r.isNew && r.hadPrev && S.score > 0, sub: r.isNew ? 'Your best so far.' : `Your best is ${r.best} pts.` });
+      bind('#again', play);
+    }, 1600);
+    return true;
+  }
+  keyHandler = e => {
+    if (!S || S.over || !S.wave || isTyping(e.target)) return;
+    const n = parseInt(e.key, 10);
+    const b = S.wave.bubbles[n - 1];
+    if (b && S.wave.t >= b.delay) { e.preventDefault(); hit(b); }
+  };
+  intro();
+}
+
+/* ---------- view: lightning round ---------- */
+function viewLightning(set) {
+  const cards = uniqueCards(studyCards(set));
+  const ROUND = 60000;
+  app.innerHTML = `<div class="wrap narrow page">${modeHeader(set, 'Lightning Round', `<div class="hud"><span class="mult" id="lt-mult"></span><div class="stat"><b id="lt-score">0</b><span>Score</span></div><div class="stat"><b id="lt-time">60</b><span>Seconds</span></div></div>`)}<div id="lt-root" class="stack"></div></div>`;
+  const root = $('#lt-root');
+  let S = null;
+  function intro() {
+    const b = bestOf(set, 'lightning', 'score');
+    root.innerHTML = `<div class="result center">
+      <h2>Match or no match?</h2>
+      <p class="howto">You get 60 seconds. Each card shows a term and a definition. Decide fast whether they belong together. Every 5 in a row raises your multiplier, up to ×4. A wrong call resets it and costs 3 seconds.</p>
+      <p class="muted"><kbd>←</kbd> or <kbd>F</kbd> for no match · <kbd>→</kbd> or <kbd>J</kbd> for match</p>
+      ${b != null ? `<p class="mono muted">Your best: ${b} pts</p>` : ''}
+      <button class="btn primary big" type="button" id="again">Start the clock</button></div>`;
+    bind('#again', play);
+  }
+  function play() {
+    S = { score: 0, combo: 0, mult: 1, right: 0, total: 0, end: performance.now() + ROUND, q: null, last: null, over: false };
+    root.innerHTML = `<div class="tbar" id="lt-bar"><span></span></div>
+      <div class="lt-card indexcard" id="lt-card"></div>
+      <div class="lt-btns">
+        <button class="btn big no" type="button" id="lt-no">No match <kbd>←</kbd></button>
+        <button class="btn big yes" type="button" id="lt-yes">Match <kbd>→</kbd></button>
+      </div>`;
+    bind('#lt-no', () => answer(false));
+    bind('#lt-yes', () => answer(true));
+    hud();
+    nextQ();
+    const bar = $('#lt-bar'), fill = bar.firstElementChild, tEl = $('#lt-time');
+    loop(now => {
+      if (S.over) return false;
+      const rem = S.end - now;
+      if (rem <= 0) { tEl.textContent = '0'; fill.style.width = '0%'; finish(); return false; }
+      fill.style.width = (rem / ROUND * 100).toFixed(2) + '%';
+      bar.classList.toggle('low', rem < 10000);
+      tEl.textContent = Math.ceil(rem / 1000);
+    });
+  }
+  function hud() {
+    $('#lt-score').textContent = S.score;
+    $('#lt-mult').textContent = S.mult > 1 ? '×' + S.mult : '';
+  }
+  function nextQ() {
+    let c = cards[Math.floor(Math.random() * cards.length)];
+    if (cards.length > 1) while (c.id === S.last) c = cards[Math.floor(Math.random() * cards.length)];
+    S.last = c.id;
+    let truth = Math.random() < 0.5, def = c.def;
+    if (!truth) {
+      const d = shuffle(cards).find(x => x.id !== c.id && key(x.def) !== key(c.def));
+      if (d) def = d.def; else truth = true;
+    }
+    S.q = { c, def, truth };
+    $('#lt-card').innerHTML = `<span class="qlabel">Term</span><div class="lt-term">${esc(c.term)}</div><span class="qlabel">Definition</span><div class="lt-def">${esc(def)}</div>`;
+  }
+  function answer(yes) {
+    if (!S || S.over) return;
+    S.total++;
+    const ok = yes === S.q.truth;
+    const card = $('#lt-card');
+    card.classList.remove('flash-good', 'flash-bad'); void card.offsetWidth;
+    if (ok) {
+      S.right++; S.combo++;
+      S.mult = 1 + Math.min(3, Math.floor(S.combo / 5));
+      S.score += 10 * S.mult;
+      card.classList.add('flash-good');
+    } else {
+      S.combo = 0; S.mult = 1;
+      S.end -= 3000;
+      card.classList.add('flash-bad');
+    }
+    hud();
+    nextQ();
+  }
+  function finish() {
+    S.over = true;
+    root.querySelectorAll('.lt-btns button').forEach(b => { b.disabled = true; });
+    const r = recordBest(set, 'lightning', 'score', S.score, false);
+    later(() => {
+      const acc = S.total ? Math.round(S.right / S.total * 100) : 0;
+      root.innerHTML = resultBlock({ title: 'Time’s up!', big: S.score + ' pts', isNew: r.isNew && r.hadPrev && S.score > 0, sub: `${S.right} of ${S.total} right (${acc}% accuracy).${r.isNew ? '' : ` Your best is ${r.best} pts.`}` });
+      bind('#again', play);
+    }, 500);
+  }
+  keyHandler = e => {
+    if (isTyping(e.target)) return;
+    if (!S || S.over) return;
+    const k = e.key.toLowerCase();
+    if (k === 'arrowleft' || k === 'f') { e.preventDefault(); answer(false); }
+    else if (k === 'arrowright' || k === 'j') { e.preventDefault(); answer(true); }
+  };
+  intro();
+}
+
+/* ---------- view: unscramble ---------- */
+function viewUnscramble(set) {
+  const base = studyCards(set);
+  const gs = gameSides(base);
+  const eligible = scrambleEligible(base, gs);
+  app.innerHTML = `<div class="wrap narrow page">${modeHeader(set, 'Unscramble', `<div class="hud"><div class="stat"><b id="us-n"></b><span>Word</span></div><div class="stat"><b id="us-score">0</b><span>Score</span></div></div>`)}<div id="us-root" class="stack"></div></div>`;
+  const root = $('#us-root');
+  let S = null;
+  function intro() {
+    const b = bestOf(set, 'unscramble', 'score');
+    const n = Math.min(10, eligible.length);
+    root.innerHTML = `<div class="result center">
+      <h2>Rebuild ${plural(n, 'word')}</h2>
+      <p class="howto">Read the clue, then click the letters (or type them) in the right order. Each word is worth 10 points; every hint costs 3. Backspace removes the last letter.</p>
+      ${b != null ? `<p class="mono muted">Your best: ${b} pts</p>` : ''}
+      <button class="btn primary big" type="button" id="again">Start game</button></div>`;
+    bind('#again', play);
+  }
+  function play() {
+    S = { pool: shuffle(eligible).slice(0, 10), i: 0, score: 0 };
+    load();
+  }
+  function load() {
+    const c = S.pool[S.i];
+    const word = c[gs.show];
+    const chars = [...word];
+    const letters = chars.filter(ch => LETTER.test(ch));
+    const target = letters.join('');
+    let tiles = letters.slice();
+    for (let tries = 0; tries < 12; tries++) {
+      tiles = shuffle(letters);
+      if (tiles.join('').toLowerCase() !== target.toLowerCase()) break;
+    }
+    Object.assign(S, { c, chars, letters, target, tiles, ans: [], hints: 0, locked: 0, state: 'play' });
+    $('#us-n').textContent = `${S.i + 1}/${S.pool.length}`;
+    $('#us-score').textContent = S.score;
+    root.innerHTML = `<div class="us-clue indexcard"><span class="qlabel">${sideLabel(gs.clue)}</span><div class="qprompt ${gs.clue} ${sizeClass(c[gs.clue]) === 'sz-l' ? 'sz-m' : 'sz-s'}">${esc(c[gs.clue])}</div></div>
+      <div class="slots" id="us-slots"></div>
+      <div class="tiles" id="us-tiles"></div>
+      <div class="row" style="justify-content:center">
+        <button class="btn" type="button" id="us-back">Backspace</button>
+        <button class="btn" type="button" id="us-hint">Hint (−3)</button>
+        <button class="btn ghost" type="button" id="us-skip">Skip</button>
+      </div>`;
+    bind('#us-back', backspace);
+    bind('#us-hint', hint);
+    bind('#us-skip', skip);
+    $('#us-tiles').addEventListener('click', e => { const t = e.target.closest('.tile'); if (t) place(+t.dataset.t); });
+    $('#us-slots').addEventListener('click', e => {
+      const s = e.target.closest('.slot[data-k]'); if (!s || S.state !== 'play') return;
+      const k = +s.dataset.k;
+      if (k < S.locked || k >= S.ans.length) return;
+      S.ans.splice(k, 1);
+      draw();
+    });
+    draw();
+  }
+  function draw(reveal) {
+    let k = 0;
+    const words = [];
+    let cur = [];
+    S.chars.forEach(ch => {
+      if (/\s/.test(ch)) { if (cur.length) words.push(cur); cur = []; return; }
+      if (LETTER.test(ch)) {
+        const idx = k++;
+        const filled = reveal ? S.letters[idx] : (S.ans[idx] != null ? S.tiles[S.ans[idx]] : '');
+        const cls = idx < S.locked ? 'locked' : (filled ? 'filled' : '');
+        cur.push(`<button class="slot ${cls}" type="button" data-k="${idx}" aria-label="Letter ${idx + 1}${filled ? ': ' + esc(filled) : ', empty'}">${esc(filled)}</button>`);
+      } else {
+        cur.push(`<span class="slot fixed">${esc(ch)}</span>`);
+      }
+    });
+    if (cur.length) words.push(cur);
+    const slots = $('#us-slots');
+    slots.className = 'slots' + (S.state === 'solved' ? ' solved' : '') + (reveal ? ' revealed' : '');
+    slots.innerHTML = words.map(w => `<span class="word">${w.join('')}</span>`).join('');
+    const used = new Set(S.ans);
+    $('#us-tiles').innerHTML = S.tiles.map((t, i) => `<button class="tile ${used.has(i) ? 'used' : ''}" type="button" data-t="${i}" ${used.has(i) || S.state !== 'play' ? 'disabled' : ''} aria-label="Letter ${esc(t)}">${esc(t)}</button>`).join('');
+    const lockBtns = S.state !== 'play';
+    ['#us-back', '#us-hint', '#us-skip'].forEach(sel => { const b = $(sel); if (b) b.disabled = lockBtns; });
+  }
+  function place(ti) {
+    if (S.state !== 'play' || S.ans.includes(ti) || S.ans.length >= S.letters.length) return;
+    S.ans.push(ti);
+    draw();
+    if (S.ans.length === S.letters.length) check();
+  }
+  function backspace() {
+    if (S.state !== 'play' || S.ans.length <= S.locked) return;
+    S.ans.pop();
+    draw();
+  }
+  function check() {
+    const built = S.ans.map(t => S.tiles[t]).join('');
+    if (built.toLowerCase() === S.target.toLowerCase()) {
+      S.state = 'solved';
+      const pts = S.hints >= S.letters.length ? 0 : Math.max(1, 10 - 3 * S.hints);
+      S.score += pts;
+      $('#us-score').textContent = S.score;
+      draw();
+      later(advance, 900);
+    } else {
+      const slots = $('#us-slots');
+      slots.classList.remove('bad'); void slots.offsetWidth; slots.classList.add('bad');
+    }
+  }
+  function hint() {
+    if (S.state !== 'play') return;
+    S.hints++;
+    S.locked = Math.min(S.letters.length, S.hints);
+    const ans = [], used = new Set();
+    for (let k = 0; k < S.locked; k++) {
+      const want = S.letters[k].toLowerCase();
+      const prefer = S.ans[k];
+      let ti = (prefer != null && !used.has(prefer) && S.tiles[prefer].toLowerCase() === want) ? prefer : S.tiles.findIndex((t, i) => !used.has(i) && t.toLowerCase() === want);
+      ans.push(ti); used.add(ti);
+    }
+    S.ans = ans;
+    draw();
+    if (S.ans.length === S.letters.length) check();
+  }
+  function skip() {
+    if (S.state !== 'play') return;
+    S.state = 'skipped';
+    draw(true);
+    later(advance, 1600);
+  }
+  function advance() {
+    S.i++;
+    if (S.i < S.pool.length) { load(); return; }
+    const r = recordBest(set, 'unscramble', 'score', S.score, false);
+    root.innerHTML = resultBlock({ title: 'All words done', big: S.score + ' pts', isNew: r.isNew && r.hadPrev && S.score > 0, sub: `out of ${S.pool.length * 10} possible.${r.isNew ? '' : ` Your best is ${r.best} pts.`}` });
+    bind('#again', play);
+  }
+  keyHandler = e => {
+    if (!S || !S.letters || S.state !== 'play' || isTyping(e.target)) return;
+    if (e.key === 'Backspace') { e.preventDefault(); backspace(); return; }
+    if (e.key.length === 1 && LETTER.test(e.key)) {
+      const used = new Set(S.ans);
+      const ti = S.tiles.findIndex((t, i) => !used.has(i) && t.toLowerCase() === e.key.toLowerCase());
+      if (ti >= 0) { e.preventDefault(); place(ti); }
+    }
+  };
+  intro();
+}
+
+/* ---------- boot ---------- */
+renderFoot();
+render();
+initStore().then(() => { renderFoot(); render(); }, () => { loadLocal(); renderFoot(); render(); });
+})();
+</script>
+</body>
+</html>
